@@ -97,14 +97,17 @@ EmployeeManagementSystem/
 
 ## 🎨 Features Implemented
 
-✅ Role-based authentication and authorization
-✅ Employee CRUD with search/filter
-✅ Department management
-✅ Leave request workflow with approval
-✅ Attendance tracking with check-in/out
-✅ Analytics dashboard
-✅ Modern, responsive UI
-✅ PostgreSQL database integration
+## 🎨 Features Implemented
+
+- ✅ Role-based authentication and authorization
+- ✅ Employee CRUD with search/filter
+- ✅ Department management
+- ✅ Leave request workflow with approval
+- ✅ Attendance tracking with check-in/out
+- ✅ Analytics dashboard
+- ✅ Modern, responsive UI
+- ✅ PostgreSQL database integration
+
 
 ## 📖 For More Details
 
