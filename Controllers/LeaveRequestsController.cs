@@ -26,6 +26,10 @@ public class LeaveRequestsController : Controller
         var user = await _userManager.GetUserAsync(User);
         var isManager = User.IsInRole("Manager") || User.IsInRole("Admin");
 
+        // Check if current user has an employee record
+        var currentEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
+        ViewBag.HasEmployeeRecord = currentEmployee != null;
+
         IQueryable<LeaveRequest> leaveRequests;
 
         if (isManager)
@@ -34,23 +38,29 @@ public class LeaveRequestsController : Controller
             leaveRequests = _context.LeaveRequests
                 .Include(lr => lr.Employee)
                 .Include(lr => lr.ApprovedBy);
+            
+            // Check if manager/admin has pending requests (only if they have employee record)
+            if (currentEmployee != null)
+            {
+                ViewBag.HasPendingRequest = await _context.LeaveRequests
+                    .AnyAsync(lr => lr.EmployeeId == currentEmployee.Id && lr.Status == LeaveStatus.Pending);
+            }
         }
         else
         {
             // Employees see only their own requests
-            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
-            if (employee == null)
+            if (currentEmployee == null)
             {
                 return NotFound("Employee record not found.");
             }
             leaveRequests = _context.LeaveRequests
                 .Include(lr => lr.Employee)
                 .Include(lr => lr.ApprovedBy)
-                .Where(lr => lr.EmployeeId == employee.Id);
+                .Where(lr => lr.EmployeeId == currentEmployee.Id);
             
             // Check if employee has pending requests
             ViewBag.HasPendingRequest = await _context.LeaveRequests
-                .AnyAsync(lr => lr.EmployeeId == employee.Id && lr.Status == LeaveStatus.Pending);
+                .AnyAsync(lr => lr.EmployeeId == currentEmployee.Id && lr.Status == LeaveStatus.Pending);
         }
 
         if (status.HasValue)
