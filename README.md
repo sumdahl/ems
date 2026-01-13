@@ -67,7 +67,7 @@ docker run -d \
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/sumdahl/ems.git
 cd EmployeeManagementSystem
 
 # Restore dependencies
