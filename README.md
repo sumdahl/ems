@@ -116,11 +116,19 @@ Press `Ctrl+C` in the terminal where the application is running.
 
 ## 🚀 To Restart
 
+### Unix / macOS / Linux
 ```bash
-cd /Users/sumdahl/dotnet_project/EmployeeManagementSystem
+cd ~/dotnet_project/EmployeeManagementSystem
 dotnet run
+```
+
+### Windows
+```cmd
+cd %USERPROFILE%\dotnet_project\EmployeeManagementSystem
+dotnet run
+
 ```
 
 ---
 
-**Enjoy exploring your Employee Management System!** 🎉
+**Enjoy exploring our Employee Management System!** 🎉
