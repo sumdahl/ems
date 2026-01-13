@@ -1,8 +1,93 @@
-# Employee Management System - Quick Start Guide
+# Employee Management System
+
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-sumdahl%2Femployee--management--system-blue?logo=docker)](https://hub.docker.com/r/sumdahl/employee-management-system)
+[![Docker Pulls](https://img.shields.io/docker/pulls/sumdahl/employee-management-system)](https://hub.docker.com/r/sumdahl/employee-management-system)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
+
+A comprehensive Employee Management System built with ASP.NET Core 10.0, featuring role-based authentication, leave management, attendance tracking, and analytics dashboard.
+
+---
+
+## 🐳 Quick Start with Docker (Recommended)
+
+The fastest way to get started! No need to install .NET or PostgreSQL.
+
+### Pull from Docker Hub
+
+```bash
+# Pull the latest image
+docker pull sumdahl/employee-management-system:latest
+
+# Or pull a specific version
+docker pull sumdahl/employee-management-system:v1.0.0
+```
+
+### Run with Docker Compose
+
+```bash
+# Clone the repository (or download docker-compose.yml)
+git clone <your-repo-url>
+cd EmployeeManagementSystem
+
+# Start the application and database
+docker-compose up -d
+
+# View logs
+docker-compose logs -f web
+
+# Stop the application
+docker-compose down
+```
+
+**Access the application at: http://localhost:8080**
+
+### Run Standalone Container
+
+If you already have PostgreSQL running:
+
+```bash
+docker run -d \
+  --name ems-app \
+  -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="Host=your-db-host;Database=ems;Username=postgres;Password=yourpassword" \
+  sumdahl/employee-management-system:latest
+```
+
+---
+
+## 💻 Local Development Setup
+
+### Prerequisites
+- .NET 10.0 SDK
+- PostgreSQL 16+
+- Node.js 20+ (for Tailwind CSS)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd EmployeeManagementSystem
+
+# Restore dependencies
+dotnet restore
+npm install
+
+# Update connection string in appsettings.json
+# Then run the application
+dotnet run
+```
+
+**Access the application at: http://localhost:5054**
+
+---
 
 ## 🚀 Application Status
 
-✅ **Application is running successfully at: http://localhost:5054**
+✅ **Docker Image Available**: `sumdahl/employee-management-system:latest`  
+✅ **Local Development**: http://localhost:5054  
+✅ **Docker Deployment**: http://localhost:8080
 
 ## 📝 Login Credentials
 
@@ -127,6 +212,69 @@ dotnet run
 
 ```
 
+## 🚢 Deployment
+
+### Docker Hub
+The application is available on Docker Hub:
+- **Repository**: [sumdahl/employee-management-system](https://hub.docker.com/r/sumdahl/employee-management-system)
+- **Latest**: `docker pull sumdahl/employee-management-system:latest`
+- **Version 1.0.0**: `docker pull sumdahl/employee-management-system:v1.0.0`
+
+### Cloud Deployment Options
+
+**AWS ECS/Fargate**
+```bash
+# Use the Docker image directly
+docker pull sumdahl/employee-management-system:latest
+```
+
+**Azure Container Instances**
+```bash
+az container create \
+  --resource-group myResourceGroup \
+  --name ems-app \
+  --image sumdahl/employee-management-system:latest \
+  --ports 8080
+```
+
+**Google Cloud Run**
+```bash
+gcloud run deploy ems-app \
+  --image sumdahl/employee-management-system:latest \
+  --platform managed
+```
+
+**DigitalOcean App Platform**
+- Use Docker Hub image: `sumdahl/employee-management-system:latest`
+
+### Environment Variables for Production
+
+```bash
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://+:8080
+ConnectionStrings__DefaultConnection=Host=db-host;Database=ems;Username=user;Password=pass
+```
+
+## 📚 Additional Documentation
+
+- [Docker Deployment Guide](DOCKER_DEPLOYMENT.md) - Comprehensive Docker setup and deployment instructions
+- [Feature Roadmap](FEATURE_ROADMAP.md) - Planned features and enhancements
+- [Attendance Heatmap Implementation](ATTENDANCE_HEATMAP_IMPLEMENTATION.md) - Attendance visualization details
+- [Landing Page Implementation](LANDING_PAGE_IMPLEMENTATION.md) - Landing page design and features
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👨‍💻 Developer
+
+**Developed by Sumiran Dahal**
+
 ---
 
-**Enjoy exploring our Employee Management System!** 🎉
+**Enjoy exploring the Employee Management System!** 🎉
+
