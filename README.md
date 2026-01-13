@@ -78,7 +78,7 @@ The system includes:
 ## 🛠️ Technical Details
 
 - **Backend**: ASP.NET Core MVC (.NET 10.0)
-- **Database**: PostgreSQL (database: `ems`)
+- **Database**: PostgreSQL (database: `ems` it's just name)
 - **Frontend**: Tailwind CSS (CDN)
 - **Authentication**: ASP.NET Identity
 - **Port**: http://localhost:5054
