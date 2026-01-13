@@ -1,0 +1,239 @@
+@model IEnumerable<EmployeeManagementSystem.Models.Attendance>
+@{
+    ViewData["Title"] = "Attendance";
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Attendance</h1>
+        </div>
+        @if (!User.IsInRole("Admin") && !User.IsInRole("Manager"))
+        {
+            <div class="mt-4 sm:mt-0">
+                <a asp-action="CheckIn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    Check In
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Attendance Heatmap -->
+    @{
+        var heatmapData = ViewBag.HeatmapData as List<EmployeeManagementSystem.ViewModels.AttendanceHeatmapData>;
+        var isManager = ViewBag.IsManager as bool? ?? false;
+    }
+    
+    @if (heatmapData != null && heatmapData.Any())
+    {
+        <div class="bg-white shadow rounded-lg mb-6 overflow-hidden">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    @if (isManager)
+                    {
+                        <text>Team Attendance Activity</text>
+                    }
+                    else
+                    {
+                        <text>My Attendance Activity</text>
+                    }
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    @if (isManager)
+                    {
+                        <text>Visual representation of all team attendance over the past year</text>
+                    }
+                    else
+                    {
+                        <text>Your attendance pattern over the past year - similar to GitHub contributions</text>
+                    }
+                </p>
+            </div>
+            <div class="p-6">
+                <div id="attendance-heatmap" class="mb-4"></div>
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                        <span>Less</span>
+                        <div id="attendance-heatmap-legend"></div>
+                        <span>More</span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        <span class="font-medium">@heatmapData.Sum(d => d.Count)</span> total attendances in the last year
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Attendance Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                    {
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                    }
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check In</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check Out</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach (var attendance in Model)
+                {
+                    <tr class="hover:bg-gray-50">
+                        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                        {
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">@attendance.Employee?.FullName</td>
+                        }
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@attendance.Date.ToString("MMM dd, yyyy")</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            @(attendance.CheckInTime?.ToString(@"hh\:mm") ?? "-")
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            @(attendance.CheckOutTime?.ToString(@"hh\:mm") ?? "-")
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@attendance.HoursWorked.ToString("F2")</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if (attendance.Status == AttendanceStatus.Present)
+                            {
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Present</span>
+                            }
+                            else if (attendance.Status == AttendanceStatus.Late)
+                            {
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Late</span>
+                            }
+                            else if (attendance.Status == AttendanceStatus.Absent)
+                            {
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Absent</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">@attendance.Status</span>
+                            }
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            @if (!attendance.CheckOutTime.HasValue)
+                            {
+                                @if (attendance.Date.Date == DateTime.UtcNow.Date && (!User.IsInRole("Admin") && !User.IsInRole("Manager")))
+                                {
+                                    <form asp-action="CheckOut" asp-route-id="@attendance.Id" method="post" class="inline">
+                                        <button type="submit" class="px-3 py-1 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700">Check Out</button>
+                                    </form>
+                                }
+                                else if (attendance.Date.Date == DateTime.UtcNow.Date)
+                                {
+                                    <span class="text-xs text-gray-500">Not checked out</span>
+                                }
+                                else
+                                {
+                                    <span class="text-xs text-red-500">Missing checkout</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-xs text-green-600">✓ Checked out</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Cal-Heatmap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/cal-heatmap.css">
+    
+    <!-- Cal-Heatmap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/cal-heatmap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/plugins/Tooltip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/plugins/LegendLite.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (heatmapData != null && heatmapData.Any())
+            {
+                <text>
+                // Prepare data for cal-heatmap
+                const attendanceData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    heatmapData.Select(d => new { 
+                        date = d.DateString, 
+                        value = d.Count 
+                    })
+                ));
+                
+                // Transform data to timestamp-based object
+                const heatmapDataObj = {};
+                attendanceData.forEach(item => {
+                    const timestamp = Math.floor(new Date(item.date).getTime() / 1000);
+                    heatmapDataObj[timestamp] = item.value;
+                });
+
+                const cal = new CalHeatmap();
+                const now = new Date();
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+                cal.paint({
+                    itemSelector: '#attendance-heatmap',
+                    data: {
+                        source: heatmapDataObj,
+                        type: 'json',
+                        x: 'date',
+                        y: 'value',
+                    },
+                    date: {
+                        start: oneYearAgo,
+                    },
+                    range: 12,
+                    scale: {
+                        color: {
+                            type: 'threshold',
+                            range: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+                            domain: [1, 3, 5, 10],
+                        },
+                    },
+                    domain: {
+                        type: 'month',
+                        gutter: 4,
+                        label: { text: 'MMM', textAlign: 'start', position: 'top' },
+                    },
+                    subDomain: {
+                        type: 'day',
+                        radius: 2,
+                        width: 11,
+                        height: 11,
+                        gutter: 4,
+                    },
+                }, [
+                    [
+                        Tooltip,
+                        {
+                            text: function (date, value, dayjsDate) {
+                                return (value || 0) + ' attendance' + (value !== 1 ? 's' : '') + ' on ' + dayjsDate.format('MMM DD, YYYY');
+                            },
+                        },
+                    ],
+                    [
+                        LegendLite,
+                        {
+                            itemSelector: '#attendance-heatmap-legend',
+                            radius: 2,
+                            width: 11,
+                            height: 11,
+                            gutter: 4,
+                        },
+                    ],
+                ]);
+                </text>
+            }
+        });
+    </script>
+}

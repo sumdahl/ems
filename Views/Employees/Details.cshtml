@@ -1,0 +1,164 @@
+@model EmployeeManagementSystem.Models.Employee
+@{
+    ViewData["Title"] = "Employee Details";
+}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-900">Employee Details</h1>
+        <a asp-action="Index" class="text-indigo-600 hover:text-indigo-800 font-medium">← Back to List</a>
+    </div>
+
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-900">@Model.FullName</h2>
+            <p class="text-sm text-gray-600">@Model.Role?.Title - @Model.Department?.Name</p>
+        </div>
+
+        <div class="px-6 py-6">
+            <dl class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Employee ID</dt>
+                    <dd class="mt-1 text-sm text-gray-900">#@Model.Id</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Status</dt>
+                    <dd class="mt-1">
+                        @if (Model.IsActive)
+                        {
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        }
+                        else
+                        {
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                        }
+                    </dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Email</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Phone</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Phone</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Department</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Department?.Name</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Role</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Role?.Title</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Hire Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.HireDate.ToString("MMMM dd, yyyy")</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Salary</dt>
+                    <dd class="mt-1 text-sm text-gray-900">$@string.Format("{0:N2}", Model.Salary)</dd>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Address</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Address</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Annual Leave Balance</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.AnnualLeaveBalance days</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Sick Leave Balance</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.SickLeaveBalance days</dd>
+                </div>
+            </dl>
+        </div>
+
+        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+        {
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Edit</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</a>
+                }
+            </div>
+        }
+    </div>
+
+    @if (Model.LeaveRequests.Any() || Model.AttendanceRecords.Any())
+    {
+        <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            @if (Model.LeaveRequests.Any())
+            {
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Leave Requests</h3>
+                    <div class="space-y-3">
+                        @foreach (var leave in Model.LeaveRequests.OrderByDescending(l => l.CreatedAt).Take(5))
+                        {
+                            <div class="border-l-4 @(leave.Status == LeaveStatus.Approved ? "border-green-400" : leave.Status == LeaveStatus.Rejected ? "border-red-400" : "border-yellow-400") pl-3">
+                                <p class="text-sm font-medium text-gray-900">@leave.LeaveType</p>
+                                <p class="text-xs text-gray-500">@leave.StartDate.ToString("MMM dd") - @leave.EndDate.ToString("MMM dd, yyyy")</p>
+                                <p class="text-xs">
+                                    @if (leave.Status == LeaveStatus.Pending)
+                                    {
+                                        <span class="text-yellow-600">Pending</span>
+                                    }
+                                    else if (leave.Status == LeaveStatus.Approved)
+                                    {
+                                        <span class="text-green-600">Approved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-red-600">Rejected</span>
+                                    }
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.AttendanceRecords.Any())
+            {
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Attendance</h3>
+                    <div class="space-y-3">
+                        @foreach (var attendance in Model.AttendanceRecords.OrderByDescending(a => a.Date).Take(5))
+                        {
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">@attendance.Date.ToString("MMM dd, yyyy")</p>
+                                    <p class="text-xs text-gray-500">@attendance.HoursWorked.ToString("F2") hours</p>
+                                </div>
+                                <div>
+                                    @if (attendance.Status == AttendanceStatus.Present)
+                                    {
+                                        <span class="px-2 text-xs rounded-full bg-green-100 text-green-800">Present</span>
+                                    }
+                                    else if (attendance.Status == AttendanceStatus.Late)
+                                    {
+                                        <span class="px-2 text-xs rounded-full bg-yellow-100 text-yellow-800">Late</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 text-xs rounded-full bg-red-100 text-red-800">@attendance.Status</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

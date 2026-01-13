@@ -1,0 +1,203 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var stats = ViewBag.Stats as DashboardStats;
+    var recentLeaves = ViewBag.RecentLeaves as List<LeaveRequest>;
+    var departmentStats = ViewBag.DepartmentStats as List<DepartmentStat>;
+    var recentAttendance = ViewBag.RecentAttendance as List<Attendance>;
+    var isManager = ViewBag.IsManager as bool? ?? false;
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p class="mt-2 text-sm text-gray-600">Welcome to the Employee Management System</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
+                            <dd class="text-3xl font-semibold text-gray-900">@stats?.TotalEmployees</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Departments</dt>
+                            <dd class="text-3xl font-semibold text-gray-900">@stats?.TotalDepartments</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Pending Leaves</dt>
+                            <dd class="text-3xl font-semibold text-gray-900">@stats?.PendingLeaveRequests</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Today's Attendance</dt>
+                            <dd class="text-3xl font-semibold text-gray-900">@stats?.TodayAttendance</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Attendance for Employees -->
+    @if (!isManager && recentAttendance != null && recentAttendance.Any())
+    {
+        <div class="bg-white shadow rounded-lg mb-8">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">My Recent Attendance</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var attendance in recentAttendance)
+                        {
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">@attendance.Date.ToString("MMM dd, yyyy")</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@(attendance.CheckInTime?.ToString(@"hh\:mm") ?? "-")</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@(attendance.CheckOutTime?.ToString(@"hh\:mm") ?? "-")</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@attendance.HoursWorked.ToString("F2")</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if (attendance.Status == AttendanceStatus.Present)
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Present</span>
+                                    }
+                                    else if (attendance.Status == AttendanceStatus.Late)
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Late</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">@attendance.Status</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- Recent Leave Requests -->
+    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+    {
+        <div class="bg-white shadow rounded-lg mb-8">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Leave Requests</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var leave in recentLeaves ?? new List<LeaveRequest>())
+                        {
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">@leave.Employee?.FullName</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@leave.LeaveType</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@leave.StartDate.ToString("MMM dd") - @leave.EndDate.ToString("MMM dd, yyyy")</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if (leave.Status == LeaveStatus.Pending)
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                                    }
+                                    else if (leave.Status == LeaveStatus.Approved)
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- Department Stats -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Department Overview</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (var dept in departmentStats ?? new List<DepartmentStat>())
+                {
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-900">@dept.DepartmentName</h4>
+                        <p class="mt-2 text-3xl font-semibold text-indigo-600">@dept.EmployeeCount</p>
+                        <p class="text-sm text-gray-500">employees</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

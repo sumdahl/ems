@@ -1,0 +1,97 @@
+@model EmployeeManagementSystem.Models.Department
+@{
+    ViewData["Title"] = "Department Details";
+}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-900">Department Details</h1>
+        <a asp-action="Index" class="text-indigo-600 hover:text-indigo-800 font-medium">← Back to List</a>
+    </div>
+
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-900">@Model.Name</h2>
+            <p class="text-sm text-gray-600">@(Model.Description ?? "No description")</p>
+        </div>
+
+        <div class="px-6 py-6">
+            <dl class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Department ID</dt>
+                    <dd class="mt-1 text-sm text-gray-900">#@Model.Id</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Manager</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@(Model.Manager?.FullName ?? "Not assigned")</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Total Employees</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Employees.Count</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Active Employees</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Employees.Count(e => e.IsActive)</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Created</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.CreatedAt.ToString("MMMM dd, yyyy")</dd>
+                </div>
+            </dl>
+        </div>
+
+        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+        {
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Edit</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</a>
+                }
+            </div>
+        }
+    </div>
+
+    @if (Model.Employees.Any())
+    {
+        <div class="mt-8 bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Department Employees</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var employee in Model.Employees.OrderBy(e => e.LastName))
+                        {
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">@employee.FullName</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Role?.Title</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Email</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if (employee.IsActive)
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

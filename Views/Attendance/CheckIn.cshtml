@@ -1,0 +1,40 @@
+@model EmployeeManagementSystem.Models.Attendance
+@{
+    ViewData["Title"] = "Check In";
+    var employee = ViewBag.Employee as Employee;
+}
+
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Check In</h1>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="mb-6 text-center">
+            <p class="text-lg text-gray-700">Welcome, <strong>@employee?.FullName</strong></p>
+            <p class="text-3xl font-bold text-indigo-600 mt-2">@DateTime.Now.ToString("hh:mm tt")</p>
+            <p class="text-sm text-gray-500">@DateTime.Now.ToString("dddd, MMMM dd, yyyy")</p>
+        </div>
+
+        <form asp-action="CheckIn" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-4"></div>
+            
+            <div>
+                <label asp-for="Notes" class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                <textarea asp-for="Notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Any notes for today..."></textarea>
+                <span asp-validation-for="Notes" class="text-red-600 text-xs"></span>
+            </div>
+            
+            <div class="mt-6 flex items-center justify-between">
+                <a asp-action="Index" class="text-indigo-600 hover:text-indigo-800 font-medium">Cancel</a>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700">
+                    Check In Now
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
