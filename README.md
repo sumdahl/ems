@@ -108,11 +108,6 @@ EmployeeManagementSystem/
 - ✅ Modern, responsive UI
 - ✅ PostgreSQL database integration
 
-
-## 📖 For More Details
-
-See [walkthrough.md](file:///Users/sumdahl/.gemini/antigravity/brain/bb340644-ded6-42b0-898c-10ab95921974/walkthrough.md) for comprehensive documentation.
-
 ## 🔄 To Stop the Application
 
 Press `Ctrl+C` in the terminal where the application is running.
