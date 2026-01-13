@@ -27,7 +27,7 @@ docker pull sumdahl/employee-management-system:v1.0.0
 
 ```bash
 # Clone the repository (or download docker-compose.yml)
-git clone <your-repo-url>
+git clone https://github.com/sumdahl/ems.git
 cd EmployeeManagementSystem
 
 # Start the application and database
