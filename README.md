@@ -16,11 +16,52 @@ The fastest way to get started! No need to install .NET or PostgreSQL.
 ### Pull from Docker Hub
 
 ```bash
-# Pull the latest image
-docker pull sumdahl/employee-management-system:latest
+# Create a network for EMS API and PostgreSQL
+docker network create ems-net
+```
 
-# Or pull a specific version
-docker pull sumdahl/employee-management-system:v1.0.0
+### Start PostgreSQL Container
+```bash
+docker run -d \
+  --name ems-postgres \
+  --network ems-net \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=ems \
+  -p 5432:5432 \
+  postgres:15
+```
+
+### Start EMS API Container
+```bash
+docker run -d \
+  --name ems-api \
+  --network ems-net \
+  -p 8080:8080 \
+  -e ASPNETCORE_ENVIRONMENT=Development \
+  -e ConnectionStrings__DefaultConnection="Host=ems-postgres;Port=5432;Database=ems;Username=postgres;Password=postgres" \
+  sumdahl/employee-management-system:v1.0.0
+```
+
+### Verify Containers
+```bash
+docker ps
+
+#You should see both running
+ems-api          0.0.0.0:8080->8080/tcp
+ems-postgres     0.0.0.0:5432->5432/tcp
+```
+
+### Test EMS API
+```bash
+http://localhost:8080
+```
+
+### Stop/ Remove Containers
+```bash
+docker stop ems-api ems-postgres
+docker rm ems-api ems-postgres
+docker network rm ems-net
 ```
 
 ### Run with Docker Compose
