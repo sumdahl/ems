@@ -13,10 +13,9 @@ A comprehensive Employee Management System built with ASP.NET Core 10.0, featuri
 
 The fastest way to get started! No need to install .NET or PostgreSQL.
 
-### Pull from Docker Hub
+### Create a network for EMS API and PostgreSQL 
 
 ```bash
-# Create a network for EMS API and PostgreSQL
 docker network create ems-net
 ```
 
@@ -47,7 +46,9 @@ docker run -d \
 ```bash
 docker ps
 
-#You should see both running
+```
+# You should see both running:
+```bash
 ems-api          0.0.0.0:8080->8080/tcp
 ems-postgres     0.0.0.0:5432->5432/tcp
 ```
