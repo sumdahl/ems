@@ -85,6 +85,9 @@ builder.Services.AddAuthentication(options =>
 // Register JWT Token Service
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+// Register Notification Service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
