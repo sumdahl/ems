@@ -148,6 +148,14 @@ dotnet run
 Email: admin@ems.com
 Password: Admin@123
 Role: Admin 
+
+Email: manager@ems.com
+Password: Manager@123
+Role: Manager
+
+Email: employee@ems.com
+Password: Employee@123
+Role: Employee
 ```
 
 ## 🎯 Quick Test Workflow
