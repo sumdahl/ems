@@ -42,7 +42,7 @@ docker run -d \
   postgres:15
 ```
 
-### Start EMS API Container
+### 🚀 Start EMS API Container (Recommended – v1.0.1)
 ```bash
 docker run -d \
   --name ems-api \
@@ -50,6 +50,17 @@ docker run -d \
   -p 8080:8080 \
   -e ASPNETCORE_ENVIRONMENT=Development \
   -e ConnectionStrings__DefaultConnection="Host=ems-postgres;Port=5432;Database=ems;Username=postgres;Password=postgres" \
+  sumdahl/employee-management-system:v1.0.1
+```
+
+### Start ems api container v1.0.0
+```bash
+docker run -d \
+  --name ems-api \
+  --network ems-net \
+  -p 8080:8080 \
+  -e aspnetcore_environment=development \
+  -e connectionstrings__defaultconnection="host=ems-postgres;port=5432;database=ems;username=postgres;password=postgres" \
   sumdahl/employee-management-system:v1.0.0
 ```
 
