@@ -1,0 +1,90 @@
+@model EmployeeManagementSystem.ViewModels.UserProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">User Profile</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application access.</p>
+            </div>
+            <div class="flex-shrink-0">
+                <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
+                    <span class="text-xl font-medium leading-none text-indigo-700">
+                        @(Model.Employee?.FirstName?.FirstOrDefault() ?? Model.User.UserName?.FirstOrDefault() ?? 'U')
+                    </span>
+                </span>
+            </div>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Username</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.User.UserName</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.User.Email</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Roles</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        @foreach (var role in Model.Roles)
+                        {
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                                @role
+                            </span>
+                        }
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    @if (Model.Employee != null)
+    {
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Employee Details</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Employment record information.</p>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.Employee.FullName</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Department</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@(Model.Employee.Department?.Name ?? "-")</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Job Title</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@(Model.Employee.Role?.Title ?? "-")</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Hire Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.Employee.HireDate.ToString("MMM dd, yyyy")</dd>
+                    </div>
+                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Leave Balances</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                             <div class="flex space-x-4">
+                                <div>
+                                    <span class="block text-xs text-gray-500">Annual</span>
+                                    <span class="text-lg font-semibold">@Model.Employee.AnnualLeaveBalance</span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs text-gray-500">Sick</span>
+                                    <span class="text-lg font-semibold">@Model.Employee.SickLeaveBalance</span>
+                                </div>
+                             </div>
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    }
+</div>

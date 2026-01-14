@@ -170,4 +170,30 @@ public class AccountController : Controller
             return RedirectToAction("Index", "Dashboard");
         }
     }
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> Profile()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+        }
+
+        var employee = await _context.Employees
+            .Include(e => e.Department)
+            .Include(e => e.Role)
+            .FirstOrDefaultAsync(e => e.Email == user.Email);
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var model = new UserProfileViewModel
+        {
+            User = user,
+            Employee = employee,
+            Roles = roles
+        };
+
+        return View(model);
+    }
 }
