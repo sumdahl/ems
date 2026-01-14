@@ -5,7 +5,18 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
 
-A comprehensive Employee Management System built with ASP.NET Core 10.0, featuring role-based authentication, leave management, attendance tracking, and analytics dashboard.
+A comprehensive Employee Management System built with ASP.NET Core 10.0, featuring **dual authentication** (Cookie-based MVC + JWT API), role-based authorization, leave management, attendance tracking, and analytics dashboard.
+
+## ✨ Key Features
+
+- 🔐 **Dual Authentication**: Cookie-based for web UI, JWT for API
+- 👥 **Role-Based Access Control**: Admin, Manager, Employee roles
+- 📊 **Analytics Dashboard**: Real-time statistics and insights
+- 📅 **Leave Management**: Request, approve, and track employee leaves
+- ⏰ **Attendance Tracking**: Check-in/out with automatic calculations
+- 🏢 **Department Management**: Organize employees by departments
+- 🌐 **RESTful API**: Complete JWT-secured API for integrations
+- 🐳 **Docker Ready**: Multi-architecture support (AMD64, ARM64)
 
 ---
 
@@ -137,6 +148,14 @@ dotnet run
 Email: admin@ems.com
 Password: Admin@123
 Role: Admin 
+
+Email: manager@ems.com
+Password: Manager@123
+Role: Manager
+
+Email: employee@ems.com
+Password: Employee@123
+Role: Employee
 ```
 
 ## 🎯 Quick Test Workflow
@@ -297,14 +316,166 @@ ASPNETCORE_URLS=http://+:8080
 ConnectionStrings__DefaultConnection=Host=db-host;Database=ems;Username=user;Password=pass
 ```
 
+---
+
+## 🌐 JWT API
+
+The system includes a complete RESTful API with JWT authentication for building frontend applications, mobile apps, or third-party integrations.
+
+### Quick Start
+
+#### 1. Login to Get JWT Token
+```bash
+curl -X POST http://localhost:5054/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@ems.com",
+    "password": "Admin@123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "...",
+    "expiresIn": 3600,
+    "user": {
+      "id": "...",
+      "email": "admin@ems.com",
+      "fullName": "System Administrator",
+      "roles": ["Admin"]
+    }
+  }
+}
+```
+
+#### 2. Use Token to Access Protected Endpoints
+```bash
+# Get all employees
+curl -X GET http://localhost:5054/api/employees \
+  -H "Authorization: Bearer {YOUR_TOKEN}"
+
+# Get current user info
+curl -X GET http://localhost:5054/api/auth/me \
+  -H "Authorization: Bearer {YOUR_TOKEN}"
+
+# Get attendance records
+curl -X GET http://localhost:5054/api/attendance \
+  -H "Authorization: Bearer {YOUR_TOKEN}"
+```
+
+### Available API Endpoints
+
+#### Authentication (`/api/auth`)
+- `POST /api/auth/login` - Login with email/password
+- `GET /api/auth/me` - Get current user information
+- `POST /api/auth/refresh` - Refresh expired token
+
+#### Employees (`/api/employees`)
+- `GET /api/employees` - List all employees (with filtering)
+- `GET /api/employees/{id}` - Get employee by ID
+- `POST /api/employees` - Create employee (Manager/Admin only)
+- `PUT /api/employees/{id}` - Update employee (Manager/Admin only)
+- `DELETE /api/employees/{id}` - Delete employee (Admin only)
+
+#### Attendance (`/api/attendance`)
+- `GET /api/attendance` - List attendance records
+- `POST /api/attendance/checkin` - Check in
+- `POST /api/attendance/checkout/{id}` - Check out
+
+### API Response Format
+
+All API responses follow this consistent structure:
+
+**Success:**
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": { ... },
+  "errors": []
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "data": null,
+  "errors": ["Detailed error 1", "Detailed error 2"]
+}
+```
+
+### JWT Token Information
+
+- **Access Token Lifetime**: 60 minutes
+- **Refresh Token Lifetime**: 7 days
+- **Algorithm**: HMAC SHA256
+- **Claims**: User ID, Email, Full Name, Role
+
+### Testing with Postman
+
+1. **Create Environment**
+   - Variable: `baseUrl` = `http://localhost:5054`
+   - Variable: `jwt_token` = (auto-populated)
+
+2. **Login Request**
+   ```
+   POST {{baseUrl}}/api/auth/login
+   Body: { "email": "admin@ems.com", "password": "Admin@123" }
+   
+   Tests Script:
+   var jsonData = pm.response.json();
+   if (jsonData.success && jsonData.data.token) {
+       pm.environment.set("jwt_token", jsonData.data.token);
+   }
+   ```
+
+3. **Protected Requests**
+   ```
+   GET {{baseUrl}}/api/employees
+   Authorization: Bearer {{jwt_token}}
+   ```
+
+---
+
 ## 📚 Additional Documentation
 
-- [Docker Deployment Guide](DOCKER_DEPLOYMENT.md) - Comprehensive Docker setup and deployment instructions
-- [Feature Roadmap](FEATURE_ROADMAP.md) - Planned features and enhancements
-- [Attendance Heatmap Implementation](ATTENDANCE_HEATMAP_IMPLEMENTATION.md) - Attendance visualization details
-- [Landing Page Implementation](LANDING_PAGE_IMPLEMENTATION.md) - Landing page design and features
+- **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference with all MVC endpoints
+- **[JWT Implementation Guide](JWT_IMPLEMENTATION_GUIDE.md)** - Detailed JWT authentication implementation
+- **[Test Users Guide](TEST_USERS_GUIDE.md)** - Default user credentials for testing
+- **[Docker Deployment Guide](DOCKER_DEPLOYMENT.md)** - Comprehensive Docker setup and deployment
+- **[Feature Roadmap](FEATURE_ROADMAP.md)** - Planned features and enhancements
+- **[Attendance Heatmap](ATTENDANCE_HEATMAP_IMPLEMENTATION.md)** - Attendance visualization details
+- **[Landing Page](LANDING_PAGE_IMPLEMENTATION.md)** - Landing page design and features
 
-## 🤝 Contributing
+---
+
+## 🛠️ Technical Stack
+
+### Backend
+- **Framework**: ASP.NET Core 10.0 MVC
+- **Language**: C# 13
+- **Authentication**: ASP.NET Identity + JWT Bearer
+- **Database**: PostgreSQL 16
+- **ORM**: Entity Framework Core
+
+### Frontend
+- **UI Framework**: Tailwind CSS (CDN)
+- **Template Engine**: Razor Pages
+- **JavaScript**: Vanilla JS
+
+### DevOps
+- **Containerization**: Docker (Multi-arch: AMD64, ARM64)
+- **CI/CD**: Docker Hub
+- **Deployment**: Docker Compose ready
+
+---
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
