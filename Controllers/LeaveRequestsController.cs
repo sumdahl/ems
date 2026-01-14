@@ -21,7 +21,7 @@ public class LeaveRequestsController : Controller
     }
 
     // GET: LeaveRequests
-    public async Task<IActionResult> Index(LeaveStatus? status)
+    public async Task<IActionResult> Index(LeaveStatus? status, string? searchString)
     {
         var user = await _userManager.GetUserAsync(User);
         var isManager = User.IsInRole("Manager") || User.IsInRole("Admin");
@@ -68,6 +68,16 @@ public class LeaveRequestsController : Controller
             leaveRequests = leaveRequests.Where(lr => lr.Status == status.Value);
         }
 
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            searchString = searchString.ToLower();
+            leaveRequests = leaveRequests.Where(lr => 
+                (lr.Employee.FirstName + " " + lr.Employee.LastName).ToLower().Contains(searchString) ||
+                lr.Employee.Email.ToLower().Contains(searchString) ||
+                lr.Reason.ToLower().Contains(searchString)
+            );
+        }
+
         var requests = await leaveRequests.OrderByDescending(lr => lr.CreatedAt).ToListAsync();
 
         // Calculate permissions for the view
@@ -100,6 +110,13 @@ public class LeaveRequestsController : Controller
 
         ViewBag.Status = status;
         ViewBag.CanApproveIds = canApproveIds;
+        ViewBag.SearchString = searchString;
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_LeaveRequestTable", requests);
+        }
+
         return View(requests);
     }
 
@@ -192,9 +209,40 @@ public class LeaveRequestsController : Controller
 
         if (ModelState.IsValid)
         {
+            var today = DateTime.UtcNow.Date;
+            
+            // Normalize dates to ensure we compare only dates, ignoring times if any
+            var startDate = leaveRequest.StartDate.Date;
+            var endDate = leaveRequest.EndDate.Date;
+
+            // 1. Validation: Start Date must be >= Today (Present or Future)
+            // You can change 'today' to 'today.AddDays(1)' if you want STRICTLY future dates.
+            // Requirement says: "start date from present" so allowing today is generally correct.
+             if (startDate < today)
+            {
+                ModelState.AddModelError("StartDate", "Start date cannot be in the past.");
+            }
+
+            // 2. Validation: End Date must be >= Start Date (Standard logic)
+            // AND Requirement says: "end date must be always the future date" (relative to what? to start date? to today?)
+            // Assuming "End Date must be after or equal to Start Date" is the logical requirement.
+            // If the user meant "End Date must be strictly in the future relative to TODAY", then `endDate < today` check covers it.
+            // But usually, standard Leave logic is: EndDate >= StartDate.
+            
+            if (endDate < startDate)
+            {
+                ModelState.AddModelError("EndDate", "End date must be after or the same as the start date.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Employee = employee;
+                return View(leaveRequest);
+            }
+
             // Convert dates to UTC for PostgreSQL compatibility
-            leaveRequest.StartDate = DateTime.SpecifyKind(leaveRequest.StartDate, DateTimeKind.Utc);
-            leaveRequest.EndDate = DateTime.SpecifyKind(leaveRequest.EndDate, DateTimeKind.Utc);
+            leaveRequest.StartDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
+            leaveRequest.EndDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
             
             leaveRequest.EmployeeId = employee.Id;
             leaveRequest.Status = LeaveStatus.Pending;
