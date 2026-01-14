@@ -123,51 +123,63 @@ public static class DbInitializer
         }
         
         // Seed Sample Employees
-        if (!context.Employees.Any())
+        // Seed Sample Employees
+        var engDept = context.Departments.First(d => d.Name == "Engineering");
+        var humanResDept = context.Departments.First(d => d.Name == "Human Resources");
+        var salesDepartment = context.Departments.First(d => d.Name == "Sales");
+        
+        var engineerRole = context.JobRoles.First(r => r.Title == "Software Engineer");
+        var seniorEngineerRole = context.JobRoles.First(r => r.Title == "Senior Software Engineer");
+        var engineeringManagerRole = context.JobRoles.First(r => r.Title == "Engineering Manager");
+        var hrManagerRole = context.JobRoles.First(r => r.Title == "HR Manager");
+
+        // Ensure Manager Employee exists
+        if (!context.Employees.Any(e => e.Email == "manager@ems.com"))
         {
-            var engineeringDept = context.Departments.First(d => d.Name == "Engineering");
-            var hrDept = context.Departments.First(d => d.Name == "Human Resources");
-            var salesDept = context.Departments.First(d => d.Name == "Sales");
-            var engineerRole = context.JobRoles.First(r => r.Title == "Software Engineer");
-            var seniorEngineerRole = context.JobRoles.First(r => r.Title == "Senior Software Engineer");
-            var engineeringManagerRole = context.JobRoles.First(r => r.Title == "Engineering Manager");
-            var hrManagerRole = context.JobRoles.First(r => r.Title == "HR Manager");
-            
-            var employees = new[]
+            var managerEmployee = new Employee
             {
-                // Manager user's employee record
-                new Employee
-                {
-                    FirstName = "Department",
-                    LastName = "Manager",
-                    Email = "manager@ems.com",
-                    Phone = "5551234567",
-                    HireDate = DateTime.UtcNow.AddYears(-3),
-                    DepartmentId = engineeringDept.Id,
-                    RoleId = engineeringManagerRole.Id,
-                    Salary = 95000,
-                    Address = "789 Manager Blvd",
-                    IsActive = true,
-                    AnnualLeaveBalance = 25,
-                    SickLeaveBalance = 15
-                },
-                // Employee user's employee record
-                new Employee
-                {
-                    FirstName = "Regular",
-                    LastName = "Employee",
-                    Email = "employee@ems.com",
-                    Phone = "5559876543",
-                    HireDate = DateTime.UtcNow.AddMonths(-6),
-                    DepartmentId = engineeringDept.Id,
-                    RoleId = engineerRole.Id,
-                    Salary = 65000,
-                    Address = "321 Employee St",
-                    IsActive = true,
-                    AnnualLeaveBalance = 20,
-                    SickLeaveBalance = 10
-                },
-                // Additional sample employees
+                FirstName = "Department",
+                LastName = "Manager",
+                Email = "manager@ems.com",
+                Phone = "5551234567",
+                HireDate = DateTime.UtcNow.AddYears(-3),
+                DepartmentId = engDept.Id,
+                RoleId = engineeringManagerRole.Id,
+                Salary = 95000,
+                Address = "789 Manager Blvd",
+                IsActive = true,
+                AnnualLeaveBalance = 25,
+                SickLeaveBalance = 15
+            };
+            context.Employees.Add(managerEmployee);
+        }
+
+        // Ensure Regular Employee exists
+        if (!context.Employees.Any(e => e.Email == "employee@ems.com"))
+        {
+            var regularEmployee = new Employee
+            {
+                FirstName = "Regular",
+                LastName = "Employee",
+                Email = "employee@ems.com",
+                Phone = "5559876543",
+                HireDate = DateTime.UtcNow.AddMonths(-6),
+                DepartmentId = engDept.Id,
+                RoleId = engineerRole.Id,
+                Salary = 65000,
+                Address = "321 Employee St",
+                IsActive = true,
+                AnnualLeaveBalance = 20,
+                SickLeaveBalance = 10
+            };
+            context.Employees.Add(regularEmployee);
+        }
+
+        // Add other sample employees if none exist (legacy check)
+        if (!context.Employees.Any(e => e.Email != "manager@ems.com" && e.Email != "employee@ems.com"))
+        {
+             var employees = new[]
+            {
                 new Employee
                 {
                     FirstName = "John",
@@ -175,7 +187,7 @@ public static class DbInitializer
                     Email = "john.doe@ems.com",
                     Phone = "1234567890",
                     HireDate = DateTime.UtcNow.AddYears(-2),
-                    DepartmentId = engineeringDept.Id,
+                    DepartmentId = engDept.Id,
                     RoleId = seniorEngineerRole.Id,
                     Salary = 85000,
                     Address = "123 Main St",
@@ -190,7 +202,7 @@ public static class DbInitializer
                     Email = "jane.smith@ems.com",
                     Phone = "0987654321",
                     HireDate = DateTime.UtcNow.AddYears(-1),
-                    DepartmentId = hrDept.Id,
+                    DepartmentId = humanResDept.Id,
                     RoleId = hrManagerRole.Id,
                     Salary = 90000,
                     Address = "456 Oak Ave",
@@ -200,23 +212,30 @@ public static class DbInitializer
                 }
             };
             context.Employees.AddRange(employees);
-            await context.SaveChangesAsync();
-            
-            // Link users to their employee records
-            var managerEmployee = context.Employees.First(e => e.Email == "manager@ems.com");
-            var employeeEmployee = context.Employees.First(e => e.Email == "employee@ems.com");
-            
+        }
+        
+        await context.SaveChangesAsync();
+        
+        // Link users to their employee records
+        var managerEmp = context.Employees.FirstOrDefault(e => e.Email == "manager@ems.com");
+        var regularEmp = context.Employees.FirstOrDefault(e => e.Email == "employee@ems.com");
+        
+        if (managerEmp != null)
+        {
             managerUser = await userManager.FindByEmailAsync("manager@ems.com");
-            if (managerUser != null)
+            if (managerUser != null && managerUser.EmployeeId != managerEmp.Id)
             {
-                managerUser.EmployeeId = managerEmployee.Id;
+                managerUser.EmployeeId = managerEmp.Id;
                 await userManager.UpdateAsync(managerUser);
             }
-            
+        }
+        
+        if (regularEmp != null)
+        {
             employeeUser = await userManager.FindByEmailAsync("employee@ems.com");
-            if (employeeUser != null)
+            if (employeeUser != null && employeeUser.EmployeeId != regularEmp.Id)
             {
-                employeeUser.EmployeeId = employeeEmployee.Id;
+                employeeUser.EmployeeId = regularEmp.Id;
                 await userManager.UpdateAsync(employeeUser);
             }
         }

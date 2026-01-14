@@ -95,7 +95,11 @@
                             }
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onclick="event.stopPropagation()">
-                            @if ((User.IsInRole("Admin") || User.IsInRole("Manager")) && leave.Status == LeaveStatus.Pending)
+                            @{
+                                var canApproveIds = ViewBag.CanApproveIds as HashSet<int>;
+                                var canApprove = canApproveIds != null && canApproveIds.Contains(leave.Id);
+                            }
+                            @if (canApprove && leave.Status == LeaveStatus.Pending)
                             {
                                 <form asp-action="Approve" asp-route-id="@leave.Id" method="post" class="inline">
                                     <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Approve</button>
