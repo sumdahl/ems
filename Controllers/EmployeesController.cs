@@ -48,7 +48,14 @@ public class EmployeesController : Controller
         ViewBag.DepartmentId = departmentId;
         ViewBag.IsActive = isActive;
 
-        return View(await employees.OrderBy(e => e.LastName).ToListAsync());
+        var result = await employees.OrderBy(e => e.LastName).ToListAsync();
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_EmployeeTable", result);
+        }
+
+        return View(result);
     }
 
     // GET: Employees/Details/5

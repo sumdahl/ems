@@ -21,12 +21,12 @@
 
     <!-- Search and Filter -->
     <div class="bg-white shadow rounded-lg p-4 mb-6">
-        <form asp-action="Index" method="get" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <form asp-action="Index" method="get" class="grid grid-cols-1 gap-4 sm:grid-cols-4" id="searchForm">
             <div>
-                <input type="text" name="searchString" value="@ViewBag.SearchString" placeholder="Search by name or email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input type="text" id="searchInput" name="searchString" value="@ViewBag.SearchString" placeholder="Search by name or email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" autocomplete="off" />
             </div>
             <div>
-                <select name="departmentId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select name="departmentId" id="departmentId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="performSearch()">
                     <option value="">All Departments</option>
                     @foreach (var dept in (ViewBag.Departments as List<Department>) ?? new List<Department>())
                     {
@@ -35,7 +35,7 @@
                 </select>
             </div>
             <div>
-                <select name="isActive" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select name="isActive" id="isActive" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="performSearch()">
                     <option value="">All Status</option>
                     <option value="true" selected="@(ViewBag.IsActive == true)">Active</option>
                     <option value="false" selected="@(ViewBag.IsActive == false)">Inactive</option>
@@ -48,52 +48,52 @@
     </div>
 
     <!-- Employee Table -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach (var employee in Model)
-                {
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">@employee.FullName</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Email</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Department?.Name</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Role?.Title</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if (employee.IsActive)
-                            {
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
-                            }
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a asp-action="Details" asp-route-id="@employee.Id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
-                            {
-                                <a asp-action="Edit" asp-route-id="@employee.Id" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                            }
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <a asp-action="Delete" asp-route-id="@employee.Id" class="text-red-600 hover:text-red-900">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div id="employeeTableContainer">
+        <partial name="_EmployeeTable" model="Model" />
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        let debounceTimer;
+
+        function performSearch() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const searchString = document.getElementById('searchInput').value;
+                const departmentId = document.getElementById('departmentId').value;
+                const isActive = document.getElementById('isActive').value;
+
+                // Construct query parameters
+                const params = new URLSearchParams({
+                    searchString: searchString,
+                    departmentId: departmentId,
+                    isActive: isActive
+                });
+
+                fetch(`@Url.Action("Index", "Employees")?${params.toString()}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) 
+                        return response.text();
+                    else 
+                        console.error('Search failed');
+                })
+                .then(html => {
+                    if (html) {
+                        document.getElementById('employeeTableContainer').innerHTML = html;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }, 300); // Debounce delay 300ms
+        }
+
+        // Attach event listeners
+        document.getElementById('searchInput').addEventListener('input', performSearch);
+        
+        // Note: performSearch is also called by onchange in select elements
+    </script>
+}

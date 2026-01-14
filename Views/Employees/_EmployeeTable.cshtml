@@ -1,0 +1,61 @@
+@model IEnumerable<EmployeeManagementSystem.Models.Employee>
+
+<div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        No employees found matching your search.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var employee in Model)
+                {
+                    <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">@employee.FullName</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Email</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Department?.Name</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@employee.Role?.Title</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if (employee.IsActive)
+                            {
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                            }
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a asp-action="Details" asp-route-id="@employee.Id" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@employee.Id" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                            }
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@employee.Id" class="text-red-600 hover:text-red-900">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
