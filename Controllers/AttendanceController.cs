@@ -24,9 +24,24 @@ public class AttendanceController : Controller
     {
         var user = await _userManager.GetUserAsync(User);
         var isManager = User.IsInRole("Manager") || User.IsInRole("Admin");
+        
+        // Fetch current employee record to determine ID (needed for UI logic)
+        var currentEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
+        ViewBag.CurrentEmployeeId = currentEmployee?.Id;
+
+        // Check if already checked in today
+        bool hasCheckedInToday = false;
+        if (currentEmployee != null)
+        {
+            hasCheckedInToday = await _context.Attendances.AnyAsync(a => 
+                a.EmployeeId == currentEmployee.Id && 
+                a.Date >= DateTime.UtcNow.Date && 
+                a.Date < DateTime.UtcNow.Date.AddDays(1));
+        }
+        ViewBag.HasCheckedInToday = hasCheckedInToday;
 
         IQueryable<Attendance> attendances;
-        int? currentEmployeeId = null;
+        int? currentEmployeeId = currentEmployee?.Id;
 
         if (isManager)
         {
@@ -36,18 +51,13 @@ public class AttendanceController : Controller
         else
         {
             // Employees see only their own records
-            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
-            if (employee == null)
+            if (currentEmployee == null)
             {
                 return NotFound("Employee record not found.");
             }
             attendances = _context.Attendances
                 .Include(a => a.Employee)
-                .Where(a => a.EmployeeId == employee.Id);
-            
-            currentEmployeeId = employee.Id;
-            // Set current employee ID for check-out button visibility
-            ViewBag.CurrentEmployeeId = employee.Id;
+                .Where(a => a.EmployeeId == currentEmployee.Id);
         }
 
         if (startDate.HasValue)
