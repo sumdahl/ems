@@ -1,0 +1,1253 @@
+{
+	"info": {
+		"_postman_id": "ems-api-collection",
+		"name": "Employee Management System API",
+		"description": "Complete API collection for Employee Management System with authentication, CRUD operations for employees, departments, attendance, and leave requests.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"    console.log(\"Anti-forgery token extracted: \" + match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Account/Login",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Login"]
+						},
+						"description": "Get login page and extract anti-forgery token"
+					},
+					"response": []
+				},
+				{
+					"name": "Login (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Email",
+									"value": "admin@ems.com",
+									"type": "text"
+								},
+								{
+									"key": "Password",
+									"value": "Admin@123",
+									"type": "text"
+								},
+								{
+									"key": "RememberMe",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Account/Login",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Login"]
+						},
+						"description": "Login with credentials (Admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Login as Manager",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Email",
+									"value": "manager@ems.com",
+									"type": "text"
+								},
+								{
+									"key": "Password",
+									"value": "Manager@123",
+									"type": "text"
+								},
+								{
+									"key": "RememberMe",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Account/Login",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Login"]
+						},
+						"description": "Login as Manager"
+					},
+					"response": []
+				},
+				{
+					"name": "Login as Employee",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Email",
+									"value": "employee@ems.com",
+									"type": "text"
+								},
+								{
+									"key": "Password",
+									"value": "Employee@123",
+									"type": "text"
+								},
+								{
+									"key": "RememberMe",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Account/Login",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Login"]
+						},
+						"description": "Login as Employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Register Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Account/Register",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Register"]
+						},
+						"description": "Get registration page (Admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Register (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Email",
+									"value": "newuser@ems.com",
+									"type": "text"
+								},
+								{
+									"key": "FullName",
+									"value": "New User",
+									"type": "text"
+								},
+								{
+									"key": "Password",
+									"value": "User@123",
+									"type": "text"
+								},
+								{
+									"key": "ConfirmPassword",
+									"value": "User@123",
+									"type": "text"
+								},
+								{
+									"key": "Role",
+									"value": "Employee",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Account/Register",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Register"]
+						},
+						"description": "Register new user (Admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Account/Logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["Account", "Logout"]
+						},
+						"description": "Logout current user"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for login, registration, and logout"
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Dashboard/Index",
+							"host": ["{{baseUrl}}"],
+							"path": ["Dashboard", "Index"]
+						},
+						"description": "Get dashboard with statistics"
+					},
+					"response": []
+				}
+			],
+			"description": "Dashboard endpoints"
+		},
+		{
+			"name": "Employees",
+			"item": [
+				{
+					"name": "List Employees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Index",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Index"],
+							"query": [
+								{
+									"key": "searchString",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "departmentId",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get list of all employees with optional filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Details/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Details", "1"]
+						},
+						"description": "Get details of a specific employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Create",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Create"]
+						},
+						"description": "Get employee creation form"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "FirstName",
+									"value": "John",
+									"type": "text"
+								},
+								{
+									"key": "LastName",
+									"value": "Doe",
+									"type": "text"
+								},
+								{
+									"key": "Email",
+									"value": "john.doe@company.com",
+									"type": "text"
+								},
+								{
+									"key": "Phone",
+									"value": "1234567890",
+									"type": "text"
+								},
+								{
+									"key": "HireDate",
+									"value": "2024-01-15",
+									"type": "text"
+								},
+								{
+									"key": "DepartmentId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "RoleId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "Salary",
+									"value": "50000.00",
+									"type": "text"
+								},
+								{
+									"key": "Address",
+									"value": "123 Main St",
+									"type": "text"
+								},
+								{
+									"key": "IsActive",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "AnnualLeaveBalance",
+									"value": "20",
+									"type": "text"
+								},
+								{
+									"key": "SickLeaveBalance",
+									"value": "10",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Create",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Create"]
+						},
+						"description": "Create new employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Employee Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Edit/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Edit", "1"]
+						},
+						"description": "Get employee edit form"
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Employee (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "FirstName",
+									"value": "John",
+									"type": "text"
+								},
+								{
+									"key": "LastName",
+									"value": "Doe",
+									"type": "text"
+								},
+								{
+									"key": "Email",
+									"value": "john.doe@company.com",
+									"type": "text"
+								},
+								{
+									"key": "Phone",
+									"value": "1234567890",
+									"type": "text"
+								},
+								{
+									"key": "HireDate",
+									"value": "2024-01-15",
+									"type": "text"
+								},
+								{
+									"key": "DepartmentId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "RoleId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "Salary",
+									"value": "55000.00",
+									"type": "text"
+								},
+								{
+									"key": "Address",
+									"value": "123 Main St",
+									"type": "text"
+								},
+								{
+									"key": "IsActive",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Edit/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Edit", "1"]
+						},
+						"description": "Update employee information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Employee (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Employees/Delete/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Employees", "Delete", "1"]
+						},
+						"description": "Delete employee (Admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Employee management endpoints"
+		},
+		{
+			"name": "Departments",
+			"item": [
+				{
+					"name": "List Departments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Index",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Index"]
+						},
+						"description": "Get list of all departments"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Department Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Details/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Details", "1"]
+						},
+						"description": "Get details of a specific department"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Department Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Create",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Create"]
+						},
+						"description": "Get department creation form"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Department (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Name",
+									"value": "Engineering",
+									"type": "text"
+								},
+								{
+									"key": "Description",
+									"value": "Software Development Team",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Create",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Create"]
+						},
+						"description": "Create new department"
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Department Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Edit/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Edit", "1"]
+						},
+						"description": "Get department edit form"
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Department (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "Name",
+									"value": "Engineering",
+									"type": "text"
+								},
+								{
+									"key": "Description",
+									"value": "Updated Description",
+									"type": "text"
+								},
+								{
+									"key": "ManagerId",
+									"value": "5",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Edit/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Edit", "1"]
+						},
+						"description": "Update department information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Department (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Departments/Delete/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Departments", "Delete", "1"]
+						},
+						"description": "Delete department (Admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Department management endpoints"
+		},
+		{
+			"name": "Attendance",
+			"item": [
+				{
+					"name": "List Attendance",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Attendance/Index",
+							"host": ["{{baseUrl}}"],
+							"path": ["Attendance", "Index"],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-01-01",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "2024-01-31",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get attendance records with optional date filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Check In Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Attendance/CheckIn",
+							"host": ["{{baseUrl}}"],
+							"path": ["Attendance", "CheckIn"]
+						},
+						"description": "Get check-in form"
+					},
+					"response": []
+				},
+				{
+					"name": "Check In (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Notes",
+									"value": "Starting work on project X",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Attendance/CheckIn",
+							"host": ["{{baseUrl}}"],
+							"path": ["Attendance", "CheckIn"]
+						},
+						"description": "Record check-in for current employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Out (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/Attendance/CheckOut/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["Attendance", "CheckOut", "1"]
+						},
+						"description": "Record check-out for attendance record"
+					},
+					"response": []
+				},
+				{
+					"name": "Attendance Reports",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Attendance/Reports",
+							"host": ["{{baseUrl}}"],
+							"path": ["Attendance", "Reports"],
+							"query": [
+								{
+									"key": "departmentId",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "month",
+									"value": "2024-01-01",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get attendance reports (Manager/Admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Attendance tracking endpoints"
+		},
+		{
+			"name": "Leave Requests",
+			"item": [
+				{
+					"name": "List Leave Requests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/LeaveRequests/Index",
+							"host": ["{{baseUrl}}"],
+							"path": ["LeaveRequests", "Index"],
+							"query": [
+								{
+									"key": "status",
+									"value": "Pending",
+									"disabled": true
+								},
+								{
+									"key": "startDate",
+									"value": "2024-01-01",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "2024-12-31",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get leave requests with optional filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Leave Request Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/LeaveRequests/Details/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["LeaveRequests", "Details", "1"]
+						},
+						"description": "Get details of a specific leave request"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Leave Request Page (GET)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var html = pm.response.text();",
+									"var regex = /name=\"__RequestVerificationToken\".*?value=\"(.*?)\"/;",
+									"var match = regex.exec(html);",
+									"if (match) {",
+									"    pm.environment.set(\"antiforgeryToken\", match[1]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/LeaveRequests/Create",
+							"host": ["{{baseUrl}}"],
+							"path": ["LeaveRequests", "Create"]
+						},
+						"description": "Get leave request creation form"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Leave Request (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "LeaveType",
+									"value": "0",
+									"type": "text",
+									"description": "0=Annual, 1=Sick, 2=Personal, 3=Unpaid, 4=Maternity, 5=Paternity"
+								},
+								{
+									"key": "StartDate",
+									"value": "2024-02-01",
+									"type": "text"
+								},
+								{
+									"key": "EndDate",
+									"value": "2024-02-05",
+									"type": "text"
+								},
+								{
+									"key": "Reason",
+									"value": "Family vacation",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/LeaveRequests/Create",
+							"host": ["{{baseUrl}}"],
+							"path": ["LeaveRequests", "Create"]
+						},
+						"description": "Create new leave request"
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Leave Request (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "ApproverComments",
+									"value": "Approved for vacation",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/LeaveRequests/Approve/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["LeaveRequests", "Approve", "1"]
+						},
+						"description": "Approve leave request (Manager/Admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Leave Request (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "ApproverComments",
+									"value": "Insufficient staffing during this period",
+									"type": "text"
+								},
+								{
+									"key": "__RequestVerificationToken",
+									"value": "{{antiforgeryToken}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/LeaveRequests/Reject/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["LeaveRequests", "Reject", "1"]
+						},
+						"description": "Reject leave request (Manager/Admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Leave request management endpoints"
+		},
+		{
+			"name": "Home",
+			"item": [
+				{
+					"name": "Home Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": ["{{baseUrl}}"],
+							"path": [""]
+						},
+						"description": "Get home/landing page"
+					},
+					"response": []
+				},
+				{
+					"name": "Privacy Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/Home/Privacy",
+							"host": ["{{baseUrl}}"],
+							"path": ["Home", "Privacy"]
+						},
+						"description": "Get privacy policy page"
+					},
+					"response": []
+				}
+			],
+			"description": "Public pages"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5054",
+			"type": "string"
+		},
+		{
+			"key": "antiforgeryToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
