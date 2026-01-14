@@ -85,6 +85,7 @@ public class AttendanceController : Controller
         ViewBag.EndDate = endDate;
         ViewBag.HeatmapData = heatmapData;
         ViewBag.IsManager = isManager;
+        ViewBag.IsAdmin = User.IsInRole("Admin");
 
         return View(await attendances.OrderByDescending(a => a.Date).ToListAsync());
     }
@@ -92,6 +93,12 @@ public class AttendanceController : Controller
     // GET: Attendance/CheckIn
     public async Task<IActionResult> CheckIn()
     {
+        if (User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "Administrators are not required to check in.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var user = await _userManager.GetUserAsync(User);
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
 
@@ -121,6 +128,12 @@ public class AttendanceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CheckIn([Bind("Notes")] Attendance attendance)
     {
+        if (User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "Administrators are not required to check in.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var user = await _userManager.GetUserAsync(User);
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
 
@@ -160,6 +173,12 @@ public class AttendanceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CheckOut(int id)
     {
+        if (User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "Administrators are not required to check out.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var attendance = await _context.Attendances.FindAsync(id);
 
         if (attendance == null)

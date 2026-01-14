@@ -68,8 +68,39 @@ public class LeaveRequestsController : Controller
             leaveRequests = leaveRequests.Where(lr => lr.Status == status.Value);
         }
 
+        var requests = await leaveRequests.OrderByDescending(lr => lr.CreatedAt).ToListAsync();
+
+        // Calculate permissions for the view
+        var canApproveIds = new HashSet<int>();
+        if (User.IsInRole("Admin"))
+        {
+            // Admin can approve everything
+            foreach (var req in requests)
+            {
+                canApproveIds.Add(req.Id);
+            }
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            // Manager can approve requests from non-Managers
+            // Optimization: Fetch all users with Manager role once
+            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+            var managerEmails = managerUsers.Select(u => u.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var req in requests)
+            {
+                // If requester's email is NOT in managerEmails, then current Manager can approve it
+                // Also ensures they can't approve their own request (since they are in managerEmails)
+                if (req.Employee?.Email != null && !managerEmails.Contains(req.Employee.Email))
+                {
+                    canApproveIds.Add(req.Id);
+                }
+            }
+        }
+
         ViewBag.Status = status;
-        return View(await leaveRequests.OrderByDescending(lr => lr.CreatedAt).ToListAsync());
+        ViewBag.CanApproveIds = canApproveIds;
+        return View(requests);
     }
 
     // GET: LeaveRequests/Details/5
@@ -97,6 +128,24 @@ public class LeaveRequestsController : Controller
                 return Forbid();
             }
         }
+
+        // Check if user can approve/reject
+        bool canApprove = false;
+        if (leaveRequest.Status == LeaveStatus.Pending)
+        {
+            if (User.IsInRole("Admin"))
+            {
+                canApprove = true;
+            }
+            else if (User.IsInRole("Manager"))
+            {
+                // Manager can only approve if requester is NOT a Manager
+                var requesterUser = await _userManager.FindByEmailAsync(leaveRequest.Employee.Email);
+                var isRequesterManager = requesterUser != null && await _userManager.IsInRoleAsync(requesterUser, "Manager");
+                canApprove = !isRequesterManager;
+            }
+        }
+        ViewBag.CanApprove = canApprove;
 
         return View(leaveRequest);
     }
@@ -176,6 +225,17 @@ public class LeaveRequestsController : Controller
             return NotFound();
         }
 
+        // Hierarchy Check: Only Admin can approve Manager's request
+        var requesterUser = await _userManager.FindByEmailAsync(leaveRequest.Employee.Email);
+        if (requesterUser != null && await _userManager.IsInRoleAsync(requesterUser, "Manager"))
+        {
+            if (!User.IsInRole("Admin"))
+            {
+                TempData["Error"] = "Only Administrators can approve leave requests for Managers.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
         var user = await _userManager.GetUserAsync(User);
         var approver = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
 
@@ -213,11 +273,24 @@ public class LeaveRequestsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var leaveRequest = await _context.LeaveRequests.FindAsync(id);
+        var leaveRequest = await _context.LeaveRequests
+            .Include(lr => lr.Employee)
+            .FirstOrDefaultAsync(lr => lr.Id == id);
 
         if (leaveRequest == null)
         {
             return NotFound();
+        }
+
+        // Hierarchy Check: Only Admin can reject Manager's request
+        var requesterUser = await _userManager.FindByEmailAsync(leaveRequest.Employee.Email);
+        if (requesterUser != null && await _userManager.IsInRoleAsync(requesterUser, "Manager"))
+        {
+            if (!User.IsInRole("Admin"))
+            {
+                TempData["Error"] = "Only Administrators can reject leave requests for Managers.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         var user = await _userManager.GetUserAsync(User);

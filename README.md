@@ -449,13 +449,6 @@ All API responses follow this consistent structure:
 - **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference with all MVC endpoints
 - **[JWT Implementation Guide](JWT_IMPLEMENTATION_GUIDE.md)** - Detailed JWT authentication implementation
 - **[Test Users Guide](TEST_USERS_GUIDE.md)** - Default user credentials for testing
-- **[Docker Deployment Guide](DOCKER_DEPLOYMENT.md)** - Comprehensive Docker setup and deployment
-- **[Feature Roadmap](FEATURE_ROADMAP.md)** - Planned features and enhancements
-- **[Attendance Heatmap](ATTENDANCE_HEATMAP_IMPLEMENTATION.md)** - Attendance visualization details
-- **[Landing Page](LANDING_PAGE_IMPLEMENTATION.md)** - Landing page design and features
-
----
-
 ## 🛠️ Technical Stack
 
 ### Backend

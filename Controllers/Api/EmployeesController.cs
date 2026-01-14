@@ -7,15 +7,15 @@ using EmployeeManagementSystem.ViewModels;
 
 namespace EmployeeManagementSystem.Controllers.Api;
 
-[Route("api/[controller]")]
+[Route("api/Employees")]
 [ApiController]
 [Authorize(AuthenticationSchemes = "Bearer")]
-public class EmployeesController : ControllerBase
+public class EmployeesApiController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
-    private readonly ILogger<EmployeesController> _logger;
+    private readonly ILogger<EmployeesApiController> _logger;
 
-    public EmployeesController(ApplicationDbContext context, ILogger<EmployeesController> logger)
+    public EmployeesApiController(ApplicationDbContext context, ILogger<EmployeesApiController> logger)
     {
         _context = context;
         _logger = logger;

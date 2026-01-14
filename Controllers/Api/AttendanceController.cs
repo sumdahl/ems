@@ -8,19 +8,19 @@ using EmployeeManagementSystem.ViewModels;
 
 namespace EmployeeManagementSystem.Controllers.Api;
 
-[Route("api/[controller]")]
+[Route("api/Attendance")]
 [ApiController]
 [Authorize(AuthenticationSchemes = "Bearer")]
-public class AttendanceController : ControllerBase
+public class AttendanceApiController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ILogger<AttendanceController> _logger;
+    private readonly ILogger<AttendanceApiController> _logger;
 
-    public AttendanceController(
+    public AttendanceApiController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
-        ILogger<AttendanceController> logger)
+        ILogger<AttendanceApiController> logger)
     {
         _context = context;
         _userManager = userManager;
@@ -112,6 +112,15 @@ public class AttendanceController : ControllerBase
     {
         try
         {
+            if (User.IsInRole("Admin"))
+            {
+                return StatusCode(403, new ApiResponse<Attendance>
+                {
+                    Success = false,
+                    Message = "Administrators are not required to check in."
+                });
+            }
+
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var user = await _userManager.FindByIdAsync(userId ?? "");
             var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
@@ -182,6 +191,15 @@ public class AttendanceController : ControllerBase
     {
         try
         {
+            if (User.IsInRole("Admin"))
+            {
+                return StatusCode(403, new ApiResponse<Attendance>
+                {
+                    Success = false,
+                    Message = "Administrators are not required to check out."
+                });
+            }
+
             var attendance = await _context.Attendances
                 .Include(a => a.Employee)
                 .FirstOrDefaultAsync(a => a.Id == id);
