@@ -237,6 +237,73 @@ public class LeaveRequestsController : Controller
                 ModelState.AddModelError("EndDate", "End date must be after or the same as the start date.");
             }
 
+            // 3. Validation: Check if requested days exceed available balance or policy limits
+            var requestedDays = (int)(endDate - startDate).TotalDays + 1;
+            
+            switch (leaveRequest.LeaveType)
+            {
+                case LeaveType.Annual:
+                    if (requestedDays > employee.AnnualLeaveBalance)
+                    {
+                        ModelState.AddModelError(string.Empty, $"Insufficient Annual Leave Balance. You requested {requestedDays} days, but only have {employee.AnnualLeaveBalance} days remaining.");
+                    }
+                    break;
+
+                case LeaveType.Sick:
+                    if (requestedDays > employee.SickLeaveBalance)
+                    {
+                        ModelState.AddModelError(string.Empty, $"Insufficient Sick Leave Balance. You requested {requestedDays} days, but only have {employee.SickLeaveBalance} days remaining.");
+                    }
+                    break;
+
+                case LeaveType.Personal:
+                    // Policy: Max 3 consecutive days
+                    if (requestedDays > 3)
+                    {
+                        ModelState.AddModelError("EndDate", "Personal leave cannot exceed 3 consecutive days per request.");
+                    }
+                    // Balance Check
+                    if (requestedDays > employee.PersonalLeaveBalance)
+                    {
+                        ModelState.AddModelError(string.Empty, $"Insufficient Personal Leave Balance. You requested {requestedDays} days, but only have {employee.PersonalLeaveBalance} days remaining.");
+                    }
+                    break;
+
+                case LeaveType.Unpaid:
+                    // Policy: Max 30 days per request
+                    if (requestedDays > 30)
+                    {
+                        ModelState.AddModelError("EndDate", "Unpaid leave cannot exceed 30 days per request.");
+                    }
+                    break;
+
+                case LeaveType.Maternity:
+                    // Policy: Female only
+                    if (employee.Gender != Gender.Female)
+                    {
+                        ModelState.AddModelError("LeaveType", "Maternity leave is only applicable for female employees.");
+                    }
+                    // Policy: Max 180 days
+                    if (requestedDays > 180)
+                    {
+                        ModelState.AddModelError("EndDate", "Maternity leave cannot exceed 180 days.");
+                    }
+                    break;
+
+                case LeaveType.Paternity:
+                    // Policy: Male only
+                    if (employee.Gender != Gender.Male)
+                    {
+                        ModelState.AddModelError("LeaveType", "Paternity leave is only applicable for male employees.");
+                    }
+                    // Policy: Max 15 days
+                    if (requestedDays > 15)
+                    {
+                        ModelState.AddModelError("EndDate", "Paternity leave cannot exceed 15 days.");
+                    }
+                    break;
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Employee = employee;
@@ -309,6 +376,10 @@ public class LeaveRequestsController : Controller
         else if (leaveRequest.LeaveType == LeaveType.Sick)
         {
             employee.SickLeaveBalance -= leaveRequest.TotalDays;
+        }
+        else if (leaveRequest.LeaveType == LeaveType.Personal)
+        {
+            employee.PersonalLeaveBalance -= leaveRequest.TotalDays;
         }
 
         await _context.SaveChangesAsync();
