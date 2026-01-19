@@ -13,12 +13,16 @@
   "description": "",
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.11",
+    "autoprefixer": "^10.4.23",
     "chart.js": "^4.5.1",
+    "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
     "@popperjs/core": "^2.11.8",
+    "@tailwindcss/cli": "^4.1.18",
     "cal-heatmap": "^4.2.4"
   }
 }

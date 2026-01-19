@@ -10,12 +10,26 @@
         </div>
         @if (ViewBag.HasEmployeeRecord == true)
         {
-            <div class="mt-4 sm:mt-0">
+            <div class="mt-4 sm:mt-0" id="requestButtonContainer">
                 @if (ViewBag.HasPendingRequest == true)
                 {
                     <button disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-400 cursor-not-allowed" title="You have a pending leave request">
                         Request Leave
                     </button>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4 sm:absolute sm:mt-0 sm:top-20 sm:right-8 sm:w-auto">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    Pending request.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 }
                 else
                 {
@@ -26,24 +40,6 @@
             </div>
         }
     </div>
-
-    @if (ViewBag.HasEmployeeRecord == true && ViewBag.HasPendingRequest == true)
-    {
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-700">
-                        You have a pending leave request. Please wait for it to be approved or rejected before submitting a new request.
-                    </p>
-                </div>
-            </div>
-        </div>
-    }
 
 
     <!-- Search and Filter -->
@@ -75,9 +71,10 @@
     <script>
         let debounceTimer;
 
-        function performSearch() {
+        function performSearch(immediate = false) {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
+            
+            const executeSearch = () => {
                 const searchString = document.getElementById('searchInput').value;
                 const status = document.getElementById('statusFilter').value;
 
@@ -104,10 +101,65 @@
                     }
                 })
                 .catch(error => console.error('Error:', error));
-            }, 300); // 300ms delay
+            };
+
+            if (immediate) {
+                executeSearch();
+            } else {
+                debounceTimer = setTimeout(executeSearch, 300); // 300ms delay
+            }
         }
 
-        // Attach event listener
-        document.getElementById('searchInput').addEventListener('input', performSearch);
+        // Attach event listener to inputs
+        document.getElementById('searchInput').addEventListener('input', () => performSearch(false));
+
+        // Function to update the request button state
+        function updateRequestButtonState() {
+            fetch('@Url.Action("HasPendingRequest", "LeaveRequests")')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('requestButtonContainer');
+                    if (data.hasPending) {
+                        container.innerHTML = `
+                            <button disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-400 cursor-not-allowed" title="You have a pending leave request">
+                                Request Leave
+                            </button>
+                             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4 sm:absolute sm:mt-0 sm:top-20 sm:right-8 sm:w-auto">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-yellow-700">
+                                            Pending request.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = `
+                            <a href="@Url.Action("Create", "LeaveRequests")" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                Request Leave
+                            </a>
+                        `;
+                    }
+                })
+                .catch(error => console.error('Error fetching pending request status:', error));
+        }
+
+        // Listen for SignalR updates
+        if (typeof connection !== 'undefined') {
+            connection.on("ReceiveSystemUpdate", function (updateType) {
+                if (updateType === "LeaveRequests") {
+                    console.log("Received leave request update. Refreshing table...");
+                    performSearch(true);
+                    updateRequestButtonState();
+                }
+            });
+        }
+
     </script>
 }

@@ -2,7 +2,8 @@
 module.exports = {
   content: [
     "./Views/**/*.cshtml",
-    "./Pages/**/*.cshtml"
+    "./Pages/**/*.cshtml",
+    "./wwwroot/js/**/*.js"
   ],
   theme: {
     extend: {

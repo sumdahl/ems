@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
+using EmployeeManagementSystem.Services;
 
 namespace EmployeeManagementSystem.Controllers;
 
@@ -13,11 +14,13 @@ public class LeaveRequestsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationService _notificationService;
 
-    public LeaveRequestsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public LeaveRequestsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     // GET: LeaveRequests
@@ -250,6 +253,11 @@ public class LeaveRequestsController : Controller
 
             _context.Add(leaveRequest);
             await _context.SaveChangesAsync();
+            
+            // Notify managers/admins about new request
+            await _notificationService.SendNotificationAsync($"New Leave Request from {employee.FullName} ({leaveRequest.LeaveType})");
+            await _notificationService.SendSystemUpdateAsync("LeaveRequests");
+
             TempData["Success"] = "Leave request submitted successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -304,6 +312,11 @@ public class LeaveRequestsController : Controller
         }
 
         await _context.SaveChangesAsync();
+        
+        // Notify everyone (simplification) that a request was approved
+        await _notificationService.SendNotificationAsync($"Leave Request for {employee.FullName} has been approved.");
+        await _notificationService.SendSystemUpdateAsync("LeaveRequests");
+
         TempData["Success"] = "Leave request approved successfully.";
         return RedirectToAction(nameof(Index));
     }
@@ -350,7 +363,27 @@ public class LeaveRequestsController : Controller
         leaveRequest.ApproverComments = comments;
 
         await _context.SaveChangesAsync();
+        
+        // Notify everyone (simplification) that a request was rejected
+        await _notificationService.SendNotificationAsync($"Leave Request for {leaveRequest.Employee.FullName} has been rejected.");
+        await _notificationService.SendSystemUpdateAsync("LeaveRequests");
+
         TempData["Success"] = "Leave request rejected.";
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> HasPendingRequest()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Json(new { hasPending = false });
+
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user.Email);
+        if (employee == null) return Json(new { hasPending = false });
+
+        var hasPending = await _context.LeaveRequests
+            .AnyAsync(lr => lr.EmployeeId == employee.Id && lr.Status == LeaveStatus.Pending);
+
+        return Json(new { hasPending });
     }
 }

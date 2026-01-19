@@ -245,7 +245,6 @@
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/ref/EmployeeManagementSystem.dll
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/package-lock.json
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/package.json
-/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/9nejpizab4-{0}-e0h0eebnsb-e0h0eebnsb.gz
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/432jne6vpp-{0}-rig67cr26w-rig67cr26w.gz
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/EmployeeManagementSystem.sourcelink.json
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/appsettings.Production.json
@@ -258,3 +257,7 @@
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/Microsoft.IdentityModel.Tokens.dll
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/System.IdentityModel.Tokens.Jwt.dll
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/uvbh289bup-{0}-c1cgutxotd-c1cgutxotd.gz
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/aoedg9x72p-{0}-s07oh4k632-s07oh4k632.gz
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/9nejpizab4-{0}-do1jr92n29-do1jr92n29.gz
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/xhwrcejtjm-{0}-j4pnwk54f6-j4pnwk54f6.gz
