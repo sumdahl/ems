@@ -128,10 +128,76 @@ public class LeaveRequestsController : ControllerBase
             return BadRequest("Invalid Leave Type.");
         }
 
-        // Basic Validation
         if (dto.EndDate < dto.StartDate)
         {
             return BadRequest("End Date cannot be before Start Date.");
+        }
+
+        // 3. Validation: Check if requested days exceed available balance or policy limits
+        var requestedDays = (int)(dto.EndDate - dto.StartDate).TotalDays + 1;
+            
+        switch (leaveType)
+        {
+            case LeaveType.Annual:
+                if (requestedDays > employee.AnnualLeaveBalance)
+                {
+                    return BadRequest($"Insufficient Annual Leave Balance. You requested {requestedDays} days, but only have {employee.AnnualLeaveBalance} days remaining.");
+                }
+                break;
+
+            case LeaveType.Sick:
+                if (requestedDays > employee.SickLeaveBalance)
+                {
+                    return BadRequest($"Insufficient Sick Leave Balance. You requested {requestedDays} days, but only have {employee.SickLeaveBalance} days remaining.");
+                }
+                break;
+
+            case LeaveType.Personal:
+                // Policy: Max 3 consecutive days
+                if (requestedDays > 3)
+                {
+                    return BadRequest("Personal leave cannot exceed 3 consecutive days per request.");
+                }
+                // Balance Check
+                if (requestedDays > employee.PersonalLeaveBalance)
+                {
+                    return BadRequest($"Insufficient Personal Leave Balance. You requested {requestedDays} days, but only have {employee.PersonalLeaveBalance} days remaining.");
+                }
+                break;
+
+            case LeaveType.Unpaid:
+                // Policy: Max 30 days per request
+                if (requestedDays > 30)
+                {
+                     return BadRequest("Unpaid leave cannot exceed 30 days per request.");
+                }
+                break;
+
+            case LeaveType.Maternity:
+                // Policy: Female only
+                if (employee.Gender != Gender.Female)
+                {
+                     return BadRequest("Maternity leave is only applicable for female employees.");
+                }
+                // Policy: Max 180 days
+                if (requestedDays > 180)
+                {
+                     return BadRequest("Maternity leave cannot exceed 180 days.");
+                }
+                break;
+
+            case LeaveType.Paternity:
+                // Policy: Male only
+                if (employee.Gender != Gender.Male)
+                {
+                     return BadRequest("Paternity leave is only applicable for male employees.");
+                }
+                // Policy: Max 15 days
+                if (requestedDays > 15)
+                {
+                     return BadRequest("Paternity leave cannot exceed 15 days.");
+                }
+                break;
         }
         
         // Check for pending requests overlap? (Optional, but good practice)
@@ -202,6 +268,23 @@ public class LeaveRequestsController : ControllerBase
         request.ApprovedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        
+        if (status == LeaveStatus.Approved)
+        {
+             // Deduct leave balance
+             if (request.LeaveType == LeaveType.Annual)
+             {
+                 request.Employee.AnnualLeaveBalance -= request.TotalDays;
+             }
+             else if (request.LeaveType == LeaveType.Sick)
+             {
+                 request.Employee.SickLeaveBalance -= request.TotalDays;
+             }
+             else if (request.LeaveType == LeaveType.Personal)
+             {
+                 request.Employee.PersonalLeaveBalance -= request.TotalDays;
+             }
+        }
         
         // Notify
         await _notificationService.SendSystemUpdateAsync("LeaveRequests");

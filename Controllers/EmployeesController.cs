@@ -94,7 +94,7 @@ public class EmployeesController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "ManagerPolicy")]
-    public async Task<IActionResult> Create([Bind("FirstName,LastName,Email,Phone,HireDate,DepartmentId,RoleId,Salary,Address,AnnualLeaveBalance,SickLeaveBalance")] Employee employee)
+    public async Task<IActionResult> Create([Bind("FirstName,LastName,Email,Phone,HireDate,DepartmentId,RoleId,Salary,Address,AnnualLeaveBalance,SickLeaveBalance,PersonalLeaveBalance,Gender")] Employee employee)
     {
         Console.WriteLine("=== CREATE EMPLOYEE POST ACTION CALLED ===");
         Console.WriteLine($"FirstName: {employee.FirstName}");
@@ -163,7 +163,7 @@ public class EmployeesController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "ManagerPolicy")]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Email,Phone,HireDate,TerminationDate,DepartmentId,RoleId,Salary,Address,IsActive,AnnualLeaveBalance,SickLeaveBalance")] Employee employee)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Email,Phone,HireDate,TerminationDate,DepartmentId,RoleId,Salary,Address,IsActive,AnnualLeaveBalance,SickLeaveBalance,PersonalLeaveBalance,Gender")] Employee employee)
     {
         if (id != employee.Id)
         {

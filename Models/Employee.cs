@@ -53,11 +53,22 @@ public class Employee
     [Display(Name = "Active")]
     public bool IsActive { get; set; } = true;
     
+    [Required]
+    [Display(Name = "Gender")]
+    public Gender Gender { get; set; }
+
     // Leave balance (in days)
     [Display(Name = "Annual Leave Balance")]
+    [Range(0, 25, ErrorMessage = "Annual Leave Balance must be between 0 and 25 days.")]
     public int AnnualLeaveBalance { get; set; } = 20;
+
     [Display(Name = "Sick Leave Balance")]
+    [Range(0, 10, ErrorMessage = "Sick Leave Balance must be between 0 and 10 days.")]
     public int SickLeaveBalance { get; set; } = 10;
+
+    [Display(Name = "Personal Leave Balance")]
+    [Range(0, 10, ErrorMessage = "Personal Leave Balance must be between 0 and 10 days.")]
+    public int PersonalLeaveBalance { get; set; } = 7;
     
     // Navigation properties - not required for validation since we validate the foreign keys
     public virtual Department? Department { get; set; }
