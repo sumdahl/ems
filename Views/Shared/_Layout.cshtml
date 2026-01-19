@@ -50,21 +50,15 @@
                             }
                             <a asp-controller="LeaveRequests" asp-action="Index" class="relative border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                                 Leave Requests
-                                @if (pendingLeave > 0)
-                                {
-                                    <span class="absolute top-1  -right-3 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform bg-red-600 rounded-full">
-                                        @pendingLeave
-                                    </span>
-                                }
+                                <span id="leaveRequestBadge" class="@(pendingLeave > 0 ? "" : "hidden") absolute top-1 -right-3 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform bg-red-600 rounded-full">
+                                    @pendingLeave
+                                </span>
                             </a>
                             <a asp-controller="Attendance" asp-action="Index" class="relative border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                                 Attendance
-                                @if (pendingAttendance > 0)
-                                {
-                                    <span class="absolute -top-2 -right-3 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform bg-red-600 rounded-full">
-                                        @pendingAttendance
-                                    </span>
-                                }
+                                <span id="attendanceBadge" class="@(pendingAttendance > 0 ? "" : "hidden") absolute top-1 -right-3 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform bg-red-600 rounded-full">
+                                    @pendingAttendance
+                                </span>
                             </a>
                         </div>
                     </div>
@@ -167,6 +161,8 @@
     </footer> *@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/js/notification.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

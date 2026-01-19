@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 // Add API Controllers with JSON options
 builder.Services.AddControllers()
@@ -136,5 +137,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapHub<EmployeeManagementSystem.Hubs.NotificationHub>("/notificationHub");
 
 app.Run();

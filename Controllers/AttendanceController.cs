@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
 
+using EmployeeManagementSystem.Services;
+
 namespace EmployeeManagementSystem.Controllers;
 
 [Authorize]
@@ -12,11 +14,13 @@ public class AttendanceController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationService _notificationService;
 
-    public AttendanceController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public AttendanceController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     // GET: Attendance
@@ -100,6 +104,26 @@ public class AttendanceController : Controller
         return View(await attendances.OrderByDescending(a => a.Date).ToListAsync());
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetTodayStatus()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Json(new { hasCheckedIn = false });
+
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user.Email);
+        if (employee == null) return Json(new { hasCheckedIn = false });
+
+        var today = DateTime.UtcNow.Date;
+        var attendance = await _context.Attendances
+            .FirstOrDefaultAsync(a => a.EmployeeId == employee.Id && a.Date.Date == today);
+            
+        return Json(new { 
+            hasCheckedIn = attendance != null,
+            hasCheckedOut = attendance?.CheckOutTime != null,
+            attendanceId = attendance?.Id
+        });
+    }
+
     // GET: Attendance/CheckIn
     public async Task<IActionResult> CheckIn()
     {
@@ -174,6 +198,9 @@ public class AttendanceController : Controller
 
         _context.Add(attendance);
         await _context.SaveChangesAsync();
+        
+        await _notificationService.SendSystemUpdateAsync("Attendance");
+
         TempData["Success"] = "Checked in successfully.";
         return RedirectToAction(nameof(Index));
     }
@@ -222,6 +249,9 @@ public class AttendanceController : Controller
         }
 
         await _context.SaveChangesAsync();
+        
+        await _notificationService.SendSystemUpdateAsync("Attendance");
+
         TempData["Success"] = "Checked out successfully.";
         return RedirectToAction(nameof(Index));
     }

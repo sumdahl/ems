@@ -10,7 +10,7 @@
         </div>
         @if (!User.IsInRole("Admin"))
         {
-            <div class="mt-4 sm:mt-0">
+            <div class="mt-4 sm:mt-0" id="attendanceButtonContainer">
                 @if (ViewBag.HasCheckedInToday == true)
                 {
                     <button type="button" disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-400 cursor-not-allowed">
@@ -242,6 +242,46 @@
                     ],
                 ]);
                 </text>
+            }
+                </text>
+            }
+
+            // SignalR Live Updates
+            if (typeof connection !== 'undefined') {
+                connection.on("ReceiveSystemUpdate", function (updateType) {
+                    if (updateType === "Attendance") {
+                        console.log("Received attendance update. Refreshing UI...");
+                        refreshAttendanceUI();
+                    }
+                });
+            }
+
+            function refreshAttendanceUI() {
+                fetch(window.location.href)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+
+                        // Update Button Container
+                        const newBtnContainer = doc.getElementById('attendanceButtonContainer');
+                        const oldBtnContainer = document.getElementById('attendanceButtonContainer');
+                        if (newBtnContainer && oldBtnContainer) {
+                            oldBtnContainer.innerHTML = newBtnContainer.innerHTML;
+                        }
+
+                        // Update Table
+                        const newTableBody = doc.querySelector('table tbody');
+                        const oldTableBody = document.querySelector('table tbody');
+                        if (newTableBody && oldTableBody) {
+                            oldTableBody.innerHTML = newTableBody.innerHTML;
+                        }
+                        
+                        // Update Heatmap Data (Optional/Advanced, maybe just reload data?)
+                        // For now we won't touch the heatmap as it requires re-initializing the library
+                        
+                    })
+                    .catch(e => console.error("Error refreshing UI:", e));
             }
         });
     </script>
