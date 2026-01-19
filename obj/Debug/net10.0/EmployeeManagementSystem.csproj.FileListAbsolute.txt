@@ -261,3 +261,10 @@
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/aoedg9x72p-{0}-s07oh4k632-s07oh4k632.gz
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/9nejpizab4-{0}-do1jr92n29-do1jr92n29.gz
 /Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/compressed/xhwrcejtjm-{0}-j4pnwk54f6-j4pnwk54f6.gz
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/EmployeeManagementSystem.MvcApplicationPartsAssemblyInfo.cs
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/EmployeeManagementSystem.xml
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/Microsoft.OpenApi.dll
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/Swashbuckle.AspNetCore.Swagger.dll
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/sumdahl/dotnet_project/EmployeeManagementSystem/obj/Debug/net10.0/EmployeeManagementSystem.xml
