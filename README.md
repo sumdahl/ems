@@ -50,7 +50,7 @@ docker run -d \
   -p 8080:8080 \
   -e ASPNETCORE_ENVIRONMENT=Development \
   -e ConnectionStrings__DefaultConnection="Host=ems-postgres;Port=5432;Database=ems;Username=postgres;Password=postgres" \
-  sumdahl/employee-management-system:latest
+  sumdahl/employee-management-system:v1.0.3
 ```
 ### Verify Containers
 ```bash
