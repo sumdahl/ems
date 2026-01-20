@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Models;
 
 namespace EmployeeManagementSystem.Data;
@@ -7,8 +8,8 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
     {
-        // Ensure database is created
-        await context.Database.EnsureCreatedAsync();
+        // Ensure database is migrated to latest version
+        await context.Database.MigrateAsync();
         
         // Seed Identity Roles
         string[] roleNames = { "Admin", "Manager", "Employee" };
@@ -89,7 +90,8 @@ public static class DbInitializer
                 UserName = adminEmail,
                 Email = adminEmail,
                 EmailConfirmed = true,
-                FullName = "System Administrator"
+                FullName = "System Administrator",
+                Gender = Gender.Male
             };
             
             var result = await userManager.CreateAsync(adminUser, "Admin@123");
@@ -110,7 +112,8 @@ public static class DbInitializer
                 UserName = managerEmail,
                 Email = managerEmail,
                 EmailConfirmed = true,
-                FullName = "Department Manager"
+                FullName = "Department Manager",
+                Gender = Gender.Male
             };
             
             var result = await userManager.CreateAsync(managerUser, "Manager@123");
@@ -131,7 +134,8 @@ public static class DbInitializer
                 UserName = employeeEmail,
                 Email = employeeEmail,
                 EmailConfirmed = true,
-                FullName = "Regular Employee"
+                FullName = "Regular Employee",
+                Gender = Gender.Male
             };
             
             var result = await userManager.CreateAsync(employeeUser, "Employee@123");
@@ -168,7 +172,8 @@ public static class DbInitializer
                 Address = "789 Manager Blvd",
                 IsActive = true,
                 AnnualLeaveBalance = 25,
-                SickLeaveBalance = 15
+                SickLeaveBalance = 15,
+                Gender = Gender.Male
             };
             context.Employees.Add(managerEmployee);
         }
@@ -189,7 +194,8 @@ public static class DbInitializer
                 Address = "321 Employee St",
                 IsActive = true,
                 AnnualLeaveBalance = 20,
-                SickLeaveBalance = 10
+                SickLeaveBalance = 10,
+                Gender = Gender.Male
             };
             context.Employees.Add(regularEmployee);
         }
@@ -212,7 +218,8 @@ public static class DbInitializer
                     Address = "123 Main St",
                     IsActive = true,
                     AnnualLeaveBalance = 22,
-                    SickLeaveBalance = 12
+                    SickLeaveBalance = 12,
+                    Gender = Gender.Male
                 },
                 new Employee
                 {
@@ -227,7 +234,8 @@ public static class DbInitializer
                     Address = "456 Oak Ave",
                     IsActive = true,
                     AnnualLeaveBalance = 23,
-                    SickLeaveBalance = 13
+                    SickLeaveBalance = 13,
+                    Gender = Gender.Female
                 }
             };
             context.Employees.AddRange(employees);
