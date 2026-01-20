@@ -6,6 +6,7 @@ public class ApplicationUser : IdentityUser
 {
     public int? EmployeeId { get; set; }
     public string? FullName { get; set; }
+    public Gender? Gender { get; set; }
     
     // Navigation property
     public virtual Employee? Employee { get; set; }

@@ -85,7 +85,8 @@ public class AccountController : Controller
             {
                 UserName = model.Email,
                 Email = model.Email,
-                FullName = model.FullName
+                FullName = model.FullName,
+                Gender = model.Gender
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -111,6 +112,7 @@ public class AccountController : Controller
                             FirstName = model.FullName.Split(' ').FirstOrDefault() ?? model.FullName,
                             LastName = model.FullName.Split(' ').Skip(1).FirstOrDefault() ?? "",
                             Email = model.Email,
+                            Gender = model.Gender,
                             HireDate = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc),
                             DepartmentId = firstDepartment.Id,
                             RoleId = firstRole.Id,
