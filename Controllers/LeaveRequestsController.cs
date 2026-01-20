@@ -285,9 +285,9 @@ public class LeaveRequestsController : Controller
                     }
 
                     // Policy: Max 180 days per request
-                    if (requestedDays > 180)
+                    if (requestedDays > 60)
                     {
-                        ModelState.AddModelError("EndDate", "Maternity leave cannot exceed 180 days per request.");
+                        ModelState.AddModelError("EndDate", "Maternity leave cannot exceed 60 days per request.");
                     }
                     
                     // Policy: Max 180 days total limit
