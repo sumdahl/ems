@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
 using EmployeeManagementSystem.ViewModels;
+using EmployeeManagementSystem.Services;
 
 namespace EmployeeManagementSystem.Controllers.Api;
 
@@ -14,11 +15,13 @@ public class EmployeesApiController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<EmployeesApiController> _logger;
+    private readonly INotificationService _notificationService;
 
-    public EmployeesApiController(ApplicationDbContext context, ILogger<EmployeesApiController> logger)
+    public EmployeesApiController(ApplicationDbContext context, ILogger<EmployeesApiController> logger, INotificationService notificationService)
     {
         _context = context;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -141,6 +144,8 @@ public class EmployeesApiController : ControllerBase
 
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
+            await _notificationService.SendEmployeeUpdateAsync(employee.Id);
+            await _notificationService.SendNotificationAsync($"Employee {employee.FirstName} {employee.LastName} has been created via API.");
 
             // Reload with related data
             await _context.Entry(employee).Reference(e => e.Department).LoadAsync();
@@ -223,6 +228,8 @@ public class EmployeesApiController : ControllerBase
             existingEmployee.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+            await _notificationService.SendEmployeeUpdateAsync(id);
+            await _notificationService.SendNotificationAsync($"Employee {existingEmployee.FirstName} {existingEmployee.LastName} has been updated via API.");
 
             // Reload with related data
             await _context.Entry(existingEmployee).Reference(e => e.Department).LoadAsync();

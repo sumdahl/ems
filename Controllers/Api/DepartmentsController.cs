@@ -1,6 +1,7 @@
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
 using EmployeeManagementSystem.ViewModels;
+using EmployeeManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +14,12 @@ namespace EmployeeManagementSystem.Controllers.Api;
 public class DepartmentsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public DepartmentsController(ApplicationDbContext context)
+    public DepartmentsController(ApplicationDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -120,6 +123,8 @@ public class DepartmentsController : ControllerBase
         try
         {
              await _context.SaveChangesAsync();
+             await _notificationService.SendSystemUpdateAsync("Departments");
+             await _notificationService.SendNotificationAsync($"New department '{department.Name}' has been created via API.");
         }
         catch (DbUpdateException ex)
         {
@@ -186,6 +191,8 @@ public class DepartmentsController : ControllerBase
         try
         {
             await _context.SaveChangesAsync();
+            await _notificationService.SendSystemUpdateAsync("Departments");
+            await _notificationService.SendNotificationAsync($"Department '{department.Name}' has been updated via API.");
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -229,6 +236,7 @@ public class DepartmentsController : ControllerBase
 
         _context.JobRoles.Remove(role);
         await _context.SaveChangesAsync();
+        await _notificationService.SendSystemUpdateAsync("Departments");
 
         return NoContent();
     }
@@ -250,6 +258,7 @@ public class DepartmentsController : ControllerBase
 
         _context.Departments.Remove(department);
         await _context.SaveChangesAsync();
+        await _notificationService.SendSystemUpdateAsync("Departments");
 
         return NoContent();
     }

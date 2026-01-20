@@ -8,4 +8,6 @@ public interface INotificationService
     Task<int> GetPendingAttendanceCountAsync(ClaimsPrincipal user);
     Task SendNotificationAsync(string message);
     Task SendSystemUpdateAsync(string updateType);
+    Task SendEmployeeUpdateAsync(int employeeId);
+    Task SendUserUpdateAsync(string userId);
 }

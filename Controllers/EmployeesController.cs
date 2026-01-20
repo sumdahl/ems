@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
+using EmployeeManagementSystem.Services;
 
 namespace EmployeeManagementSystem.Controllers;
 
@@ -11,10 +12,12 @@ namespace EmployeeManagementSystem.Controllers;
 public class EmployeesController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public EmployeesController(ApplicationDbContext context)
+    public EmployeesController(ApplicationDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     // GET: Employees
@@ -122,6 +125,8 @@ public class EmployeesController : Controller
             try 
             {
                 await _context.SaveChangesAsync();
+                await _notificationService.SendEmployeeUpdateAsync(employee.Id);
+                await _notificationService.SendNotificationAsync($"New employee {employee.FullName} has been added.");
                 TempData["Success"] = "Employee created successfully.";
                 return RedirectToAction(nameof(Index));
             }
@@ -198,6 +203,8 @@ public class EmployeesController : Controller
                 employee.UpdatedAt = DateTime.UtcNow;
                 _context.Update(employee);
                 await _context.SaveChangesAsync();
+                await _notificationService.SendEmployeeUpdateAsync(employee.Id);
+                await _notificationService.SendNotificationAsync($"Employee record for {employee.FullName} has been updated.");
                 TempData["Success"] = "Employee updated successfully.";
             }
             catch (DbUpdateConcurrencyException)

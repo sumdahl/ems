@@ -16,10 +16,83 @@ connection.on("ReceiveNotification", function (message) {
 
 // Listen for system updates
 connection.on("ReceiveSystemUpdate", function (updateType) {
-    if (updateType === "LeaveRequests" || updateType === "Attendance") {
+    if (updateType === "LeaveRequests" || updateType === "Attendance" || updateType === "Departments") {
         updateNotificationCounts();
+
+        // If on profile page, refresh balances
+        if (document.getElementById('profile-username')) {
+            refreshProfileData();
+        }
     }
 });
+
+// Listen for employee updates
+connection.on("ReceiveEmployeeUpdate", function (employeeId) {
+    // Update profile if on profile page
+    const container = document.getElementById('employee-details-container');
+    if (container && container.getAttribute('data-employee-id') == employeeId) {
+        refreshProfileData();
+    }
+
+    // Refresh employee table if on employees list page
+    if (typeof performSearch === 'function') {
+        performSearch();
+    }
+});
+
+// Listen for user updates
+connection.on("ReceiveUserUpdate", function (userId) {
+    const container = document.getElementById('profile-username');
+    if (container) { // Simple check if we are on profile page
+        refreshProfileData();
+    }
+});
+
+function refreshProfileData() {
+    fetch('/Account/GetProfileData')
+        .then(response => response.json())
+        .then(data => {
+            // Update User fields
+            document.getElementById('profile-username').innerText = data.user.userName;
+            document.getElementById('profile-email').innerText = data.user.email;
+
+            const rolesContainer = document.getElementById('profile-roles');
+            rolesContainer.innerHTML = '';
+            data.user.roles.forEach(role => {
+                const span = document.createElement('span');
+                span.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2';
+                span.innerText = role;
+                rolesContainer.appendChild(span);
+            });
+
+            // Update Employee fields if they exist
+            if (data.employee) {
+                const empFullname = document.getElementById('employee-fullname');
+                if (empFullname) empFullname.innerText = data.employee.fullName;
+
+                const empDept = document.getElementById('employee-department');
+                if (empDept) empDept.innerText = data.employee.departmentName || '-';
+
+                const empRole = document.getElementById('employee-role');
+                if (empRole) empRole.innerText = data.employee.roleTitle || '-';
+
+                const empHireDate = document.getElementById('employee-hiredate');
+                if (empHireDate) empHireDate.innerText = data.employee.hireDate;
+
+                const empGender = document.getElementById('employee-gender');
+                if (empGender) empGender.innerText = data.employee.gender;
+
+                const empAnnual = document.getElementById('employee-annual-balance');
+                if (empAnnual) empAnnual.innerText = data.employee.annualLeaveBalance;
+
+                const empSick = document.getElementById('employee-sick-balance');
+                if (empSick) empSick.innerText = data.employee.sickLeaveBalance;
+            }
+
+            showToast("Profile data updated in real-time.");
+        })
+        .catch(err => console.error("Error refreshing profile data:", err));
+}
 
 function updateNotificationCounts() {
     fetch('/api/Notification/counts')
