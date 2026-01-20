@@ -53,28 +53,50 @@ function refreshProfileData() {
         .then(response => response.json())
         .then(data => {
             // Update User fields
-            document.getElementById('profile-username').innerText = data.user.userName;
-            document.getElementById('profile-email').innerText = data.user.email;
+            const usernameElem = document.getElementById('profile-username');
+            if (usernameElem) usernameElem.innerText = data.user.userName;
+
+            const emailElem = document.getElementById('profile-email');
+            if (emailElem) emailElem.innerText = data.user.email;
+
+            const statusElem = document.getElementById('attendance-status');
+            if (statusElem) {
+                if (data.user.isCheckedInToday) {
+                    statusElem.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                    statusElem.innerHTML = '<span class="h-2 w-2 mr-1.5 rounded-full bg-green-400"></span>Checked In';
+                } else {
+                    statusElem.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+                    statusElem.innerHTML = '<span class="h-2 w-2 mr-1.5 rounded-full bg-gray-400"></span>Away';
+                }
+            }
 
             const rolesContainer = document.getElementById('profile-roles');
-            rolesContainer.innerHTML = '';
-            data.user.roles.forEach(role => {
-                const span = document.createElement('span');
-                span.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2';
-                span.innerText = role;
-                rolesContainer.appendChild(span);
-            });
+            if (rolesContainer) {
+                rolesContainer.innerHTML = '';
+                data.user.roles.forEach(role => {
+                    const span = document.createElement('span');
+                    span.className = 'inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700 border border-indigo-100 mr-2';
+                    span.innerText = role;
+                    rolesContainer.appendChild(span);
+                });
+            }
 
             // Update Employee fields if they exist
             if (data.employee) {
                 const empFullname = document.getElementById('employee-fullname');
                 if (empFullname) empFullname.innerText = data.employee.fullName;
 
-                const empDept = document.getElementById('employee-department');
-                if (empDept) empDept.innerText = data.employee.departmentName || '-';
+                const empRoleDept = document.getElementById('employee-role-dept');
+                if (empRoleDept) empRoleDept.innerText = (data.employee.roleTitle || '-') + ' • ' + (data.employee.departmentName || '-');
 
-                const empRole = document.getElementById('employee-role');
-                if (empRole) empRole.innerText = data.employee.roleTitle || '-';
+                const empPhone = document.getElementById('employee-phone');
+                if (empPhone) empPhone.innerText = data.employee.phone || '-';
+
+                const empAddress = document.getElementById('employee-address');
+                if (empAddress) empAddress.innerText = data.employee.address || '-';
+
+                const empCreatedAt = document.getElementById('employee-createdat');
+                if (empCreatedAt) empCreatedAt.innerText = data.employee.createdAt || '-';
 
                 const empHireDate = document.getElementById('employee-hiredate');
                 if (empHireDate) empHireDate.innerText = data.employee.hireDate;
@@ -87,9 +109,12 @@ function refreshProfileData() {
 
                 const empSick = document.getElementById('employee-sick-balance');
                 if (empSick) empSick.innerText = data.employee.sickLeaveBalance;
+
+                const empPersonal = document.getElementById('employee-personal-balance');
+                if (empPersonal) empPersonal.innerText = data.employee.personalLeaveBalance;
             }
 
-            showToast("Profile data updated in real-time.");
+            showToast("Profile information updated.");
         })
         .catch(err => console.error("Error refreshing profile data:", err));
 }

@@ -185,15 +185,25 @@ public class AccountController : Controller
         var employee = await _context.Employees
             .Include(e => e.Department)
             .Include(e => e.Role)
+            .Include(e => e.LeaveRequests)
             .FirstOrDefaultAsync(e => e.Email == user.Email);
 
         var roles = await _userManager.GetRolesAsync(user);
+
+        var today = DateTime.UtcNow.Date;
+        bool isCheckedInToday = false;
+        if (employee != null)
+        {
+            isCheckedInToday = await _context.Attendances
+                .AnyAsync(a => a.EmployeeId == employee.Id && a.Date.Date == today && a.CheckOutTime == null);
+        }
 
         var model = new UserProfileViewModel
         {
             User = user,
             Employee = employee,
-            Roles = roles
+            Roles = roles,
+            IsCheckedInToday = isCheckedInToday
         };
 
         return View(model);
@@ -212,6 +222,13 @@ public class AccountController : Controller
             .FirstOrDefaultAsync(e => e.Email == user.Email);
 
         var roles = await _userManager.GetRolesAsync(user);
+        var today = DateTime.UtcNow.Date;
+        bool isCheckedInToday = false;
+        if (employee != null)
+        {
+            isCheckedInToday = await _context.Attendances
+                .AnyAsync(a => a.EmployeeId == employee.Id && a.Date.Date == today && a.CheckOutTime == null);
+        }
 
         return Json(new
         {
@@ -220,7 +237,8 @@ public class AccountController : Controller
                 user.Id,
                 user.UserName,
                 user.Email,
-                roles
+                roles,
+                isCheckedInToday
             },
             employee = employee != null ? new
             {
@@ -231,7 +249,11 @@ public class AccountController : Controller
                 HireDate = employee.HireDate.ToString("MMM dd, yyyy"),
                 Gender = employee.Gender.ToString(),
                 employee.AnnualLeaveBalance,
-                employee.SickLeaveBalance
+                employee.SickLeaveBalance,
+                employee.PersonalLeaveBalance,
+                employee.Phone,
+                employee.Address,
+                CreatedAt = employee.CreatedAt.ToString("MMM dd, yyyy")
             } : null
         });
     }
