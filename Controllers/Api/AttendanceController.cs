@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
 using EmployeeManagementSystem.ViewModels;
+using EmployeeManagementSystem.Services;
 
 namespace EmployeeManagementSystem.Controllers.Api;
 
@@ -16,15 +17,18 @@ public class AttendanceApiController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<AttendanceApiController> _logger;
+    private readonly INotificationService _notificationService;
 
     public AttendanceApiController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
-        ILogger<AttendanceApiController> logger)
+        ILogger<AttendanceApiController> logger,
+        INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -160,6 +164,7 @@ public class AttendanceApiController : ControllerBase
 
             _context.Attendances.Add(attendance);
             await _context.SaveChangesAsync();
+            await _notificationService.SendSystemUpdateAsync("Attendance");
 
             await _context.Entry(attendance).Reference(a => a.Employee).LoadAsync();
 
@@ -242,6 +247,7 @@ public class AttendanceApiController : ControllerBase
             }
 
             await _context.SaveChangesAsync();
+            await _notificationService.SendSystemUpdateAsync("Attendance");
 
             _logger.LogInformation("Employee {EmployeeId} checked out at {Time}", employee.Id, now);
 

@@ -28,6 +28,16 @@ public class NotificationService : INotificationService
         await _hubContext.Clients.All.SendAsync("ReceiveSystemUpdate", updateType);
     }
 
+    public async Task SendEmployeeUpdateAsync(int employeeId)
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveEmployeeUpdate", employeeId);
+    }
+
+    public async Task SendUserUpdateAsync(string userId)
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveUserUpdate", userId);
+    }
+
     public async Task<int> GetPendingLeaveRequestsCountAsync(ClaimsPrincipal user)
     {
         // Only Admins and Managers should see pending requests from others

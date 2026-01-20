@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
+using EmployeeManagementSystem.Services;
 
 namespace EmployeeManagementSystem.Controllers;
 
@@ -13,11 +14,13 @@ public class DepartmentsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationService _notificationService;
 
-    public DepartmentsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public DepartmentsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     // GET: Departments
@@ -102,6 +105,8 @@ public class DepartmentsController : Controller
 
             _context.Add(department);
             await _context.SaveChangesAsync();
+            await _notificationService.SendSystemUpdateAsync("Departments");
+            await _notificationService.SendNotificationAsync($"New department '{department.Name}' has been created.");
             TempData["Success"] = "Department created successfully with roles.";
             return RedirectToAction(nameof(Index));
         }
@@ -209,6 +214,8 @@ public class DepartmentsController : Controller
                     }
 
                     await _context.SaveChangesAsync();
+                    await _notificationService.SendSystemUpdateAsync("Departments");
+                    await _notificationService.SendNotificationAsync($"Department '{departmentToUpdate.Name}' has been updated.");
                     TempData["Success"] = "Department updated successfully.";
                     return RedirectToAction(nameof(Index));
                 }

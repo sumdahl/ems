@@ -198,4 +198,41 @@ public class AccountController : Controller
 
         return View(model);
     }
+
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetProfileData()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        var employee = await _context.Employees
+            .Include(e => e.Department)
+            .Include(e => e.Role)
+            .FirstOrDefaultAsync(e => e.Email == user.Email);
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return Json(new
+        {
+            user = new
+            {
+                user.Id,
+                user.UserName,
+                user.Email,
+                roles
+            },
+            employee = employee != null ? new
+            {
+                employee.Id,
+                FullName = employee.FirstName + " " + employee.LastName,
+                DepartmentName = employee.Department?.Name,
+                RoleTitle = employee.Role?.Title,
+                HireDate = employee.HireDate.ToString("MMM dd, yyyy"),
+                Gender = employee.Gender.ToString(),
+                employee.AnnualLeaveBalance,
+                employee.SickLeaveBalance
+            } : null
+        });
+    }
 }
