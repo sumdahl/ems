@@ -44,6 +44,15 @@ public class DepartmentDto
     public string? Description { get; set; }
     public int? ManagerId { get; set; }
     public string? ManagerName { get; set; }
+    /// <summary>
+    /// List of roles belonging to this department.
+    /// </summary>
+    public List<RoleDto> Roles { get; set; } = new();
+    
+    /// <summary>
+    /// List of new role names to create/add to this department during creation or update.
+    /// </summary>
+    public List<string> RoleNames { get; set; } = new();
 }
 
 public class RoleDto

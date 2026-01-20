@@ -25,7 +25,7 @@
         </div>
 
         <form asp-action="Create" method="post">
-            <div asp-validation-summary="All" class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded"></div>
+
             
             <div class="space-y-6">
                 <div>
@@ -35,8 +35,14 @@
                         <option value="1">Sick</option>
                         <option value="2">Personal</option>
                         <option value="3">Unpaid</option>
-                        <option value="4">Maternity</option>
-                        <option value="5">Paternity</option>
+                        @if (employee?.Gender == EmployeeManagementSystem.Models.Gender.Female)
+                        {
+                            <option value="4">Maternity</option>
+                        }
+                        @if (employee?.Gender == EmployeeManagementSystem.Models.Gender.Male)
+                        {
+                            <option value="5">Paternity</option>
+                        }
                     </select>
                     <span asp-validation-for="LeaveType" class="text-red-600 text-xs"></span>
                 </div>

@@ -21,43 +21,62 @@ public static class DbInitializer
         }
         
         // Seed Departments
-        if (!context.Departments.Any())
+        var departments = new[]
         {
-            var departments = new[]
+            new Department { Name = "Human Resources", Description = "HR Department" },
+            new Department { Name = "Engineering", Description = "Software Development" },
+            new Department { Name = "Sales", Description = "Sales and Marketing" },
+            new Department { Name = "Finance", Description = "Finance and Accounting" },
+            new Department { Name = "Operations", Description = "Operations Management" },
+            new Department { Name = "Social Media Marketing", Description = "Social Media and Content Strategy" },
+            new Department { Name = "Business Development", Description = "Strategic Partnerships and Growth" }
+        };
+
+        foreach (var dept in departments)
+        {
+            if (!context.Departments.Any(d => d.Name == dept.Name))
             {
-                new Department { Name = "Human Resources", Description = "HR Department" },
-                new Department { Name = "Engineering", Description = "Software Development" },
-                new Department { Name = "Sales", Description = "Sales and Marketing" },
-                new Department { Name = "Finance", Description = "Finance and Accounting" },
-                new Department { Name = "Operations", Description = "Operations Management" }
-            };
-            context.Departments.AddRange(departments);
-            await context.SaveChangesAsync();
+                context.Departments.Add(dept);
+            }
         }
+        await context.SaveChangesAsync();
         
         // Seed Roles (Job Titles)
-        if (!context.JobRoles.Any())
+        // Helper to get Dept ID
+        int GetDeptId(string name) => context.Departments.First(d => d.Name == name).Id;
+
+        var roles = new List<Role>
         {
-            var engineeringDept = context.Departments.First(d => d.Name == "Engineering");
-            var hrDept = context.Departments.First(d => d.Name == "Human Resources");
-            var salesDept = context.Departments.First(d => d.Name == "Sales");
-            var financeDept = context.Departments.First(d => d.Name == "Finance");
-            
-            var roles = new[]
+            new Role { Title = "Software Engineer", DepartmentId = GetDeptId("Engineering") },
+            new Role { Title = "Senior Software Engineer", DepartmentId = GetDeptId("Engineering") },
+            new Role { Title = "Engineering Manager", DepartmentId = GetDeptId("Engineering") },
+            new Role { Title = "HR Manager", DepartmentId = GetDeptId("Human Resources") },
+            new Role { Title = "HR Specialist", DepartmentId = GetDeptId("Human Resources") },
+            new Role { Title = "Sales Representative", DepartmentId = GetDeptId("Sales") },
+            new Role { Title = "Sales Manager", DepartmentId = GetDeptId("Sales") },
+            new Role { Title = "Accountant", DepartmentId = GetDeptId("Finance") },
+            new Role { Title = "Finance Manager", DepartmentId = GetDeptId("Finance") },
+            // New Roles for Operations
+            new Role { Title = "Operations Manager", DepartmentId = GetDeptId("Operations") },
+            new Role { Title = "Operations Analyst", DepartmentId = GetDeptId("Operations") },
+            new Role { Title = "Logistics Coordinator", DepartmentId = GetDeptId("Operations") },
+            // New Roles for Social Media Marketing
+            new Role { Title = "Social Media Manager", DepartmentId = GetDeptId("Social Media Marketing") },
+            new Role { Title = "Content Creator", DepartmentId = GetDeptId("Social Media Marketing") },
+            new Role { Title = "SEO Specialist", DepartmentId = GetDeptId("Social Media Marketing") },
+            // New Roles for Business Development
+            new Role { Title = "Business Development Manager", DepartmentId = GetDeptId("Business Development") },
+            new Role { Title = "Growth Strategist", DepartmentId = GetDeptId("Business Development") }
+        };
+
+        foreach (var role in roles)
+        {
+            if (!context.JobRoles.Any(r => r.Title == role.Title && r.DepartmentId == role.DepartmentId))
             {
-                new Role { Title = "Software Engineer", DepartmentId = engineeringDept.Id },
-                new Role { Title = "Senior Software Engineer", DepartmentId = engineeringDept.Id },
-                new Role { Title = "Engineering Manager", DepartmentId = engineeringDept.Id },
-                new Role { Title = "HR Manager", DepartmentId = hrDept.Id },
-                new Role { Title = "HR Specialist", DepartmentId = hrDept.Id },
-                new Role { Title = "Sales Representative", DepartmentId = salesDept.Id },
-                new Role { Title = "Sales Manager", DepartmentId = salesDept.Id },
-                new Role { Title = "Accountant", DepartmentId = financeDept.Id },
-                new Role { Title = "Finance Manager", DepartmentId = financeDept.Id }
-            };
-            context.JobRoles.AddRange(roles);
-            await context.SaveChangesAsync();
+                context.JobRoles.Add(role);
+            }
         }
+        await context.SaveChangesAsync();
         
         // Seed Admin User
         var adminEmail = "admin@ems.com";

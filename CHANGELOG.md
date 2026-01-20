@@ -1,3 +1,12 @@
+## v1.0.4 (Roles & Departments)
+- **Departments**: Now roles can be assigned from Departments.
+- **Employee**: While creating Employee , add country code with flag in phone number.
+- **API**: Updated REST APIs accordingly and Swagger UI.
+- **404**: Fixed 404 error.
+
+## v1.0.3 (Quick Bug Fixes)
+- **Bug Fixes**: Fixed few UI bugs.
+
 ## v1.0.2 (Developer Experience & UI)
 - **Swagger UI**: Integrated Swashbuckle for interactive API testing.
 - **Infrastructure**: Integrated SignalR for real-time capabilities.

@@ -1,0 +1,132 @@
+
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-4 pointer-events-none">
+    <!-- Toasts will be injected here -->
+</div>
+
+<script>
+    // Ensure the toast container allows clicks on children but lets clicks pass through empty space
+    // Defined generic toast function
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        
+        // Define styles based on type (using Tailwind classes)
+        const styles = {
+            success: {
+                bg: 'bg-white',
+                border: 'border-l-4 border-green-500',
+                text: 'text-gray-800',
+                iconColor: 'text-green-500',
+                icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            },
+            error: {
+                bg: 'bg-white',
+                border: 'border-l-4 border-red-500',
+                text: 'text-gray-800',
+                iconColor: 'text-red-500',
+                icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            },
+            destructive: {
+                bg: 'bg-white',
+                border: 'border-l-4 border-red-500',
+                text: 'text-gray-800',
+                iconColor: 'text-red-500',
+                icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`
+            },
+            warning: {
+                bg: 'bg-white',
+                border: 'border-l-4 border-yellow-500',
+                text: 'text-gray-800',
+                iconColor: 'text-yellow-500',
+                icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`
+            },
+            info: {
+                bg: 'bg-white',
+                border: 'border-l-4 border-blue-500',
+                text: 'text-gray-800',
+                iconColor: 'text-blue-500',
+                icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            }
+        };
+
+        const style = styles[type.toLowerCase()] || styles.info;
+
+        // Create notification element
+        const toast = document.createElement('div');
+        // Added pointer-events-auto to ensure clicks work on the toast itself
+        toast.className = `pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 ${style.bg} ${style.border} transform transition-all duration-500 translate-x-full opacity-0`;
+        
+        toast.innerHTML = `
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 ${style.iconColor}">
+                        ${style.icon}
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium ${style.text}">
+                            ${message}
+                        </p>
+                    </div>
+                    <div class="ml-4 flex flex-shrink-0">
+                        <button type="button" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" onclick="this.closest('.pointer-events-auto').remove()">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Required delay for transition to work
+        requestAnimationFrame(() => {
+            // Force reflow
+            toast.offsetHeight; 
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            toast.classList.add('translate-x-0', 'opacity-100');
+        });
+
+        // Auto dismiss logic
+        setTimeout(() => {
+            dismissToast(toast);
+        }, 5000);
+    }
+    
+    function dismissToast(element) {
+        if (!element) return;
+        element.classList.remove('translate-x-0', 'opacity-100');
+        element.classList.add('translate-x-full', 'opacity-0');
+        
+        // Remove from DOM after transition matches duration (500ms)
+        setTimeout(() => {
+            if (element.parentNode) {
+                element.remove();
+            }
+        }, 500);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        @if (TempData["Success"] != null)
+        {
+            <text>showToast(@Html.Raw(Json.Serialize(TempData["Success"])), 'success');</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <text>showToast(@Html.Raw(Json.Serialize(TempData["Error"])), 'error');</text>
+        }
+        @if (TempData["Destructive"] != null)
+        {
+            <text>showToast(@Html.Raw(Json.Serialize(TempData["Destructive"])), 'destructive');</text>
+        }
+        @if (TempData["Warning"] != null)
+        {
+            <text>showToast(@Html.Raw(Json.Serialize(TempData["Warning"])), 'warning');</text>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <text>showToast(@Html.Raw(Json.Serialize(TempData["Info"])), 'info');</text>
+        }
+    });
+</script>
