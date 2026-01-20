@@ -42,7 +42,7 @@ docker run -d \
   postgres:15
 ```
 
-### 🚀 Start EMS API Container (Swagger UI, SignalR , JWT and many more – v1.0.3)
+### 🚀 Start EMS API Container (Latest Release Recommended)
 ```bash
 docker run -d \
   --name ems-api \
@@ -50,8 +50,13 @@ docker run -d \
   -p 8080:8080 \
   -e ASPNETCORE_ENVIRONMENT=Development \
   -e ConnectionStrings__DefaultConnection="Host=ems-postgres;Port=5432;Database=ems;Username=postgres;Password=postgres" \
-  sumdahl/employee-management-system:v1.0.3
+  sumdahl/employee-management-system:v1.0.4
 ```
+### View previous Docker Hub releases
+```bash
+https://hub.docker.com/repository/docker/sumdahl/employee-management-system/general
+```
+
 ### Verify Containers
 ```bash
 docker ps
