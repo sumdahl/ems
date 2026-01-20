@@ -145,7 +145,6 @@ public class EmployeesApiController : ControllerBase
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
             await _notificationService.SendEmployeeUpdateAsync(employee.Id);
-            await _notificationService.SendNotificationAsync($"Employee {employee.FirstName} {employee.LastName} has been created via API.");
 
             // Reload with related data
             await _context.Entry(employee).Reference(e => e.Department).LoadAsync();
@@ -227,9 +226,16 @@ public class EmployeesApiController : ControllerBase
             existingEmployee.SickLeaveBalance = employee.SickLeaveBalance;
             existingEmployee.UpdatedAt = DateTime.UtcNow;
 
+            // Update associated ApplicationUser FullName if exists
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.EmployeeId == id);
+            if (user != null)
+            {
+                user.FullName = existingEmployee.FullName;
+                _context.Update(user);
+            }
+
             await _context.SaveChangesAsync();
             await _notificationService.SendEmployeeUpdateAsync(id);
-            await _notificationService.SendNotificationAsync($"Employee {existingEmployee.FirstName} {existingEmployee.LastName} has been updated via API.");
 
             // Reload with related data
             await _context.Entry(existingEmployee).Reference(e => e.Department).LoadAsync();

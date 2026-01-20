@@ -126,7 +126,6 @@ public class EmployeesController : Controller
             {
                 await _context.SaveChangesAsync();
                 await _notificationService.SendEmployeeUpdateAsync(employee.Id);
-                await _notificationService.SendNotificationAsync($"New employee {employee.FullName} has been added.");
                 TempData["Success"] = "Employee created successfully.";
                 return RedirectToAction(nameof(Index));
             }
@@ -202,9 +201,17 @@ public class EmployeesController : Controller
                 
                 employee.UpdatedAt = DateTime.UtcNow;
                 _context.Update(employee);
+
+                // Update associated ApplicationUser FullName if exists
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.EmployeeId == employee.Id);
+                if (user != null)
+                {
+                    user.FullName = employee.FullName;
+                    _context.Update(user);
+                }
+
                 await _context.SaveChangesAsync();
                 await _notificationService.SendEmployeeUpdateAsync(employee.Id);
-                await _notificationService.SendNotificationAsync($"Employee record for {employee.FullName} has been updated.");
                 TempData["Success"] = "Employee updated successfully.";
             }
             catch (DbUpdateConcurrencyException)

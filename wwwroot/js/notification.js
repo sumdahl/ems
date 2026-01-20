@@ -28,9 +28,8 @@ connection.on("ReceiveSystemUpdate", function (updateType) {
 
 // Listen for employee updates
 connection.on("ReceiveEmployeeUpdate", function (employeeId) {
-    // Update profile if on profile page
-    const container = document.getElementById('employee-details-container');
-    if (container && container.getAttribute('data-employee-id') == employeeId) {
+    // Refresh if it's the current user (to update navbar) or if on profile page
+    if (employeeId == window.currentEmployeeId || document.getElementById('profile-username')) {
         refreshProfileData();
     }
 
@@ -42,8 +41,7 @@ connection.on("ReceiveEmployeeUpdate", function (employeeId) {
 
 // Listen for user updates
 connection.on("ReceiveUserUpdate", function (userId) {
-    const container = document.getElementById('profile-username');
-    if (container) { // Simple check if we are on profile page
+    if (userId == window.currentUserId || document.getElementById('profile-username')) {
         refreshProfileData();
     }
 });
@@ -58,6 +56,24 @@ function refreshProfileData() {
 
             const emailElem = document.getElementById('profile-email');
             if (emailElem) emailElem.innerText = data.user.email;
+
+            // Update Navbar Display Name and Initials
+            const navDisplayName = document.getElementById('nav-display-name');
+            const navInitials = document.getElementById('nav-initials');
+
+            const fullName = data.employee ? data.employee.fullName : (data.user.userName || 'User');
+
+            if (navDisplayName) navDisplayName.innerText = fullName;
+            if (navInitials) {
+                const parts = fullName.trim().split(' ');
+                let initials = 'U';
+                if (parts.length >= 2) {
+                    initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                } else if (parts.length === 1 && parts[0].length > 0) {
+                    initials = parts[0][0].toUpperCase();
+                }
+                navInitials.innerText = initials;
+            }
 
             const statusElem = document.getElementById('attendance-status');
             if (statusElem) {
