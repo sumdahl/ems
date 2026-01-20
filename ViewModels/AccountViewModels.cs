@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using EmployeeManagementSystem.Models;
 
 namespace EmployeeManagementSystem.ViewModels;
 
@@ -40,4 +41,8 @@ public class RegisterViewModel
     
     [Display(Name = "Role")]
     public string Role { get; set; } = "Employee";
+
+    [Required]
+    [Display(Name = "Gender")]
+    public Gender Gender { get; set; }
 }
