@@ -176,6 +176,7 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseStatusCodePagesWithReExecute("/Home/NotFound");
 app.UseRouting();
 
 app.UseAuthentication();

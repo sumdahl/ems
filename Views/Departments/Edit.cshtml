@@ -3,6 +3,17 @@
     ViewData["Title"] = "Edit Department";
 }
 
+@if (Model.Roles != null && User.IsInRole("Admin"))
+{
+    foreach (var role in Model.Roles)
+    {
+        <form id="delete-role-@role.Id" asp-action="DeleteRole" method="post" class="hidden">
+            <input type="hidden" name="roleId" value="@role.Id" />
+            @Html.AntiForgeryToken()
+        </form>
+    }
+}
+
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Edit Department</h1>
@@ -37,6 +48,48 @@
                         <span asp-validation-for="ManagerId" class="text-red-600 text-xs"></span>
                     </div>
                 }
+
+                <div class="pt-4 border-t border-gray-200">
+                    <label class="block text-lg font-medium text-gray-900 mb-4">Department Roles</label>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Existing Roles</label>
+                        @if (Model.Roles != null && Model.Roles.Any())
+                        {
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                @foreach (var role in Model.Roles)
+                                {
+                                     <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 flex justify-between items-center group hover:bg-gray-100 transition-colors">
+                                        <span>@role.Title</span>
+                                         @if (User.IsInRole("Admin"))
+                                         {
+                                             <button type="submit" form="delete-role-@role.Id" class="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50" title="Delete Role" onclick="return confirm('Are you sure you want to delete the role \'@role.Title\'?');">
+                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                             </button>
+                                         }
+                                     </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500 italic">No roles assigned yet.</p>
+                        }
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Add New Roles</label>
+                        <div id="new-roles-container" class="space-y-3">
+                             <div class="flex items-center gap-2 role-input-group">
+                                <input type="text" name="NewRoleNames" placeholder="New Role Title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                        </div>
+                        <button type="button" onclick="addNewRoleInput()" class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                            Add Another Role
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="mt-6 flex items-center justify-between">
@@ -48,6 +101,21 @@
         </form>
     </div>
 </div>
+
+<script>
+    function addNewRoleInput() {
+        const container = document.getElementById('new-roles-container');
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 role-input-group';
+        div.innerHTML = `
+            <input type="text" name="NewRoleNames" placeholder="New Role Title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 p-2" title="Remove Role">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+</script>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

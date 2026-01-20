@@ -283,10 +283,25 @@ public class LeaveRequestsController : Controller
                     {
                         ModelState.AddModelError("LeaveType", "Maternity leave is only applicable for female employees.");
                     }
-                    // Policy: Max 180 days
+
+                    // Policy: Max 180 days per request
                     if (requestedDays > 180)
                     {
-                        ModelState.AddModelError("EndDate", "Maternity leave cannot exceed 180 days.");
+                        ModelState.AddModelError("EndDate", "Maternity leave cannot exceed 180 days per request.");
+                    }
+                    
+                    // Policy: Max 180 days total limit
+                    var usedMaternityDays = (await _context.LeaveRequests
+                        .Where(lr => lr.EmployeeId == employee.Id && 
+                                     lr.LeaveType == LeaveType.Maternity && 
+                                     lr.Status == LeaveStatus.Approved)
+                        .Select(lr => new { lr.StartDate, lr.EndDate })
+                        .ToListAsync())
+                        .Sum(x => (x.EndDate - x.StartDate).TotalDays + 1);
+
+                    if (usedMaternityDays + requestedDays > 180)
+                    {
+                        ModelState.AddModelError(string.Empty, $"Total Maternity leave cannot exceed 180 days. You have already used {usedMaternityDays} days.");
                     }
                     break;
 
@@ -296,10 +311,25 @@ public class LeaveRequestsController : Controller
                     {
                         ModelState.AddModelError("LeaveType", "Paternity leave is only applicable for male employees.");
                     }
-                    // Policy: Max 15 days
+
+                    // Policy: Max 15 days per request
                     if (requestedDays > 15)
                     {
-                        ModelState.AddModelError("EndDate", "Paternity leave cannot exceed 15 days.");
+                        ModelState.AddModelError("EndDate", "Paternity leave cannot exceed 15 days per request.");
+                    }
+                    
+                    // Policy: Max 15 days total limit
+                    var usedPaternityDays = (await _context.LeaveRequests
+                        .Where(lr => lr.EmployeeId == employee.Id && 
+                                     lr.LeaveType == LeaveType.Paternity && 
+                                     lr.Status == LeaveStatus.Approved)
+                        .Select(lr => new { lr.StartDate, lr.EndDate })
+                        .ToListAsync())
+                        .Sum(x => (x.EndDate - x.StartDate).TotalDays + 1);
+
+                    if (usedPaternityDays + requestedDays > 15)
+                    {
+                        ModelState.AddModelError(string.Empty, $"Total Paternity leave cannot exceed 15 days. You have already used {usedPaternityDays} days.");
                     }
                     break;
             }

@@ -96,16 +96,19 @@ public class EmployeesController : Controller
     [Authorize(Policy = "ManagerPolicy")]
     public async Task<IActionResult> Create([Bind("FirstName,LastName,Email,Phone,HireDate,DepartmentId,RoleId,Salary,Address,AnnualLeaveBalance,SickLeaveBalance,PersonalLeaveBalance,Gender")] Employee employee)
     {
-        Console.WriteLine("=== CREATE EMPLOYEE POST ACTION CALLED ===");
-        Console.WriteLine($"FirstName: {employee.FirstName}");
-        Console.WriteLine($"LastName: {employee.LastName}");
-        Console.WriteLine($"Email: {employee.Email}");
-        Console.WriteLine($"DepartmentId: {employee.DepartmentId}");
-        Console.WriteLine($"RoleId: {employee.RoleId}");
-        Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+
         
         if (ModelState.IsValid)
         {
+            // Check for duplicate email
+            if (await _context.Employees.AnyAsync(e => e.Email == employee.Email))
+            {
+                ModelState.AddModelError("Email", "An employee with this email already exists.");
+                ViewData["DepartmentId"] = new SelectList(_context.Departments, "Id", "Name", employee.DepartmentId);
+                ViewData["RoleId"] = new SelectList(_context.JobRoles, "Id", "Title", employee.RoleId);
+                return View(employee);
+            }
+
             // Convert HireDate to UTC if it's Unspecified (from HTML form)
             if (employee.HireDate.Kind == DateTimeKind.Unspecified)
             {
@@ -115,25 +118,33 @@ public class EmployeesController : Controller
             employee.IsActive = true;
             employee.CreatedAt = DateTime.UtcNow;
             _context.Add(employee);
-            await _context.SaveChangesAsync();
-            Console.WriteLine("=== EMPLOYEE CREATED SUCCESSFULLY ===");
-            TempData["Success"] = "Employee created successfully.";
-            return RedirectToAction(nameof(Index));
+
+            try 
+            {
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Employee created successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException pgEx && pgEx.SqlState == "23505")
+            {
+                // Unique constraint violation
+                if (pgEx.ConstraintName == "IX_Employees_Email")
+                {
+                    ModelState.AddModelError("Email", "An employee with this email already exists.");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "A duplicate record exists.");
+                }
+                
+                ViewData["DepartmentId"] = new SelectList(_context.Departments, "Id", "Name", employee.DepartmentId);
+                ViewData["RoleId"] = new SelectList(_context.JobRoles, "Id", "Title", employee.RoleId);
+                return View(employee);
+            }
         }
         
         // Log validation errors
-        Console.WriteLine("=== VALIDATION ERRORS ===");
-        foreach (var key in ModelState.Keys)
-        {
-            var state = ModelState[key];
-            if (state != null && state.Errors.Count > 0)
-            {
-                foreach (var error in state.Errors)
-                {
-                    Console.WriteLine($"Field: {key}, Error: {error.ErrorMessage}");
-                }
-            }
-        }
+
         
         ViewData["DepartmentId"] = new SelectList(_context.Departments, "Id", "Name", employee.DepartmentId);
         ViewData["RoleId"] = new SelectList(_context.JobRoles, "Id", "Title", employee.RoleId);
@@ -240,7 +251,7 @@ public class EmployeesController : Controller
         {
             _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Employee deleted successfully.";
+            TempData["Destructive"] = "Employee deleted successfully.";
         }
 
         return RedirectToAction(nameof(Index));

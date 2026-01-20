@@ -30,6 +30,17 @@ public class DepartmentsController : Controller
         return View(departments);
     }
 
+    [HttpGet]
+    [AllowAnonymous] // Or appropriate policy
+    public async Task<IActionResult> GetRolesByDepartment(int departmentId)
+    {
+        var roles = await _context.JobRoles
+            .Where(r => r.DepartmentId == departmentId)
+            .Select(r => new { id = r.Id, title = r.Title })
+            .ToListAsync();
+        return Json(roles);
+    }
+
     // GET: Departments/Details/5
     public async Task<IActionResult> Details(int? id)
     {
@@ -62,7 +73,7 @@ public class DepartmentsController : Controller
     // POST: Departments/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Name,Description")] Department department)
+    public async Task<IActionResult> Create([Bind("Name,Description")] Department department, List<string> RoleNames)
     {
         // Uniqueness Check
         if (await _context.Departments.AnyAsync(d => d.Name.ToLower() == department.Name.ToLower()))
@@ -74,11 +85,24 @@ public class DepartmentsController : Controller
         {
             // Manager cannot be assigned during creation to ensure consistency
             department.ManagerId = null;
-
             department.CreatedAt = DateTime.UtcNow;
+
+            // Handle Roles
+            if (RoleNames != null && RoleNames.Any())
+            {
+                foreach (var roleName in RoleNames.Where(r => !string.IsNullOrWhiteSpace(r)))
+                {
+                    department.Roles.Add(new Role
+                    {
+                        Title = roleName,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
             _context.Add(department);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Department created successfully. You can now add employees and assign a manager.";
+            TempData["Success"] = "Department created successfully with roles.";
             return RedirectToAction(nameof(Index));
         }
         return View(department);
@@ -92,7 +116,10 @@ public class DepartmentsController : Controller
             return NotFound();
         }
 
-        var department = await _context.Departments.FindAsync(id);
+        var department = await _context.Departments
+            .Include(d => d.Roles) // Include Roles
+            .FirstOrDefaultAsync(d => d.Id == id); // Use FirstOrDefault to support Include
+            
         if (department == null)
         {
             return NotFound();
@@ -118,7 +145,7 @@ public class DepartmentsController : Controller
     // POST: Departments/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Department department)
+    public async Task<IActionResult> Edit(int id, Department department, List<string> NewRoleNames)
     {
         if (id != department.Id)
         {
@@ -135,7 +162,10 @@ public class DepartmentsController : Controller
         {
             try
             {
-                var departmentToUpdate = await _context.Departments.FindAsync(id);
+                var departmentToUpdate = await _context.Departments
+                    .Include(d => d.Roles)
+                    .FirstOrDefaultAsync(d => d.Id == id);
+
                 if (departmentToUpdate == null)
                 {
                     return NotFound();
@@ -161,6 +191,23 @@ public class DepartmentsController : Controller
                         departmentToUpdate.ManagerId = department.ManagerId;
                     }
 
+                    // Add New Roles
+                    if (NewRoleNames != null && NewRoleNames.Any())
+                    {
+                        foreach (var roleName in NewRoleNames.Where(r => !string.IsNullOrWhiteSpace(r)))
+                        {
+                            // Check if role already exists in this department to avoid duplicates
+                            if (!departmentToUpdate.Roles.Any(r => r.Title.Equals(roleName, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                departmentToUpdate.Roles.Add(new Role
+                                {
+                                    Title = roleName,
+                                    CreatedAt = DateTime.UtcNow
+                                });
+                            }
+                        }
+                    }
+
                     await _context.SaveChangesAsync();
                     TempData["Success"] = "Department updated successfully.";
                     return RedirectToAction(nameof(Index));
@@ -179,8 +226,8 @@ public class DepartmentsController : Controller
             }
         }
         
-        // Validation Failed
-        if (User.IsInRole("Admin"))
+        // Validation Failed - Reload data
+         if (User.IsInRole("Admin"))
         {
             var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
             var managerEmails = managerUsers.Select(u => u.Email).ToHashSet();
@@ -227,10 +274,43 @@ public class DepartmentsController : Controller
         {
             _context.Departments.Remove(department);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Department deleted successfully.";
+            TempData["Destructive"] = "Department deleted successfully.";
         }
 
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST: Departments/DeleteRole/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminPolicy")]
+    public async Task<IActionResult> DeleteRole(int roleId)
+    {
+        var role = await _context.JobRoles.FindAsync(roleId);
+        if (role == null)
+        {
+            return NotFound();
+        }
+
+        // Check if role is in use
+        if (await _context.Employees.AnyAsync(e => e.RoleId == roleId))
+        {
+            TempData["Error"] = $"Cannot delete role '{role.Title}' because it is assigned to one or more employees.";
+            return RedirectToAction(nameof(Edit), new { id = role.DepartmentId });
+        }
+
+        try
+        {
+            _context.JobRoles.Remove(role);
+            await _context.SaveChangesAsync();
+            TempData["Destructive"] = "Role deleted successfully.";
+        }
+        catch (Exception)
+        {
+            TempData["Error"] = "An error occurred while deleting the role.";
+        }
+
+        return RedirectToAction(nameof(Edit), new { id = role.DepartmentId });
     }
 
     private bool DepartmentExists(int id)
