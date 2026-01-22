@@ -27,19 +27,76 @@ public class DashboardController : Controller
         var user = await _userManager.GetUserAsync(User);
         var isManager = User.IsInRole("Manager") || User.IsInRole("Admin");
 
+        // Calculate role-aware pending leave requests count
+        int pendingLeaveCount;
+        if (User.IsInRole("Admin"))
+        {
+            // Admin sees all pending requests
+            pendingLeaveCount = await _context.LeaveRequests.CountAsync(lr => lr.Status == LeaveStatus.Pending);
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            // Manager sees only employee-submitted pending requests
+            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+            var managerEmails = managerUsers.Select(u => u.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            
+            pendingLeaveCount = await _context.LeaveRequests
+                .Include(lr => lr.Employee)
+                .CountAsync(lr => lr.Status == LeaveStatus.Pending && 
+                                  lr.Employee.Email != null && 
+                                  !managerEmails.Contains(lr.Employee.Email));
+        }
+        else
+        {
+            // Employees see only their own pending requests
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
+            pendingLeaveCount = employee != null 
+                ? await _context.LeaveRequests.CountAsync(lr => lr.EmployeeId == employee.Id && lr.Status == LeaveStatus.Pending)
+                : 0;
+        }
+
         var stats = new DashboardStats
         {
             TotalEmployees = await _context.Employees.CountAsync(e => e.IsActive),
             TotalDepartments = await _context.Departments.CountAsync(),
-            PendingLeaveRequests = await _context.LeaveRequests.CountAsync(lr => lr.Status == LeaveStatus.Pending),
+            PendingLeaveRequests = pendingLeaveCount,
             TodayAttendance = await _context.Attendances
                 .CountAsync(a => a.Date.Date == DateTime.UtcNow.Date && 
                     (a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late))
         };
 
-        // Get recent leave requests
-        var recentLeaves = await _context.LeaveRequests
-            .Include(lr => lr.Employee)
+        // Get recent leave requests (role-aware filtering)
+        IQueryable<LeaveRequest> recentLeavesQuery;
+        if (User.IsInRole("Admin"))
+        {
+            // Admin sees all leave requests
+            recentLeavesQuery = _context.LeaveRequests
+                .Include(lr => lr.Employee);
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            // Manager sees only employee leave requests + their own
+            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+            var managerEmails = managerUsers.Select(u => u.Email!.ToLower()).ToHashSet();
+            
+            recentLeavesQuery = _context.LeaveRequests
+                .Include(lr => lr.Employee)
+                .Where(lr => lr.Employee.Email != null && 
+                            (!managerEmails.Contains(lr.Employee.Email.ToLower()) || 
+                             lr.Employee.Email.ToLower() == user!.Email!.ToLower()));
+        }
+        else
+        {
+            // Employees see only their own requests
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
+            recentLeavesQuery = employee != null
+                ? _context.LeaveRequests
+                    .Include(lr => lr.Employee)
+                    .Where(lr => lr.EmployeeId == employee.Id)
+                : _context.LeaveRequests.Include(lr => lr.Employee).Where(lr => false); // Empty query
+        }
+        
+        var recentLeaves = await recentLeavesQuery
             .OrderByDescending(lr => lr.CreatedAt)
             .Take(5)
             .ToListAsync();

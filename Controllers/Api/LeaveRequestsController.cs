@@ -223,8 +223,8 @@ public class LeaveRequestsController : ControllerBase
         _context.LeaveRequests.Add(request);
         await _context.SaveChangesAsync();
         
-        // Notify
-        await _notificationService.SendNotificationAsync($"New Leave Request from {employee.FirstName} {employee.LastName}");
+        // Notify only admins/managers (privacy-aware)
+        await _notificationService.SendToAdminsAndManagersAsync($"New Leave Request from {employee.FirstName} {employee.LastName}");
         await _notificationService.SendSystemUpdateAsync("LeaveRequests");
 
         return CreatedAtAction(nameof(GetLeaveRequest), new { id = request.Id }, new LeaveRequestDto

@@ -49,8 +49,23 @@ public class AttendanceController : Controller
 
         if (isManager)
         {
-            // Managers see all attendance records
-            attendances = _context.Attendances.Include(a => a.Employee);
+            if (User.IsInRole("Admin"))
+            {
+                // Admins see all attendance records
+                attendances = _context.Attendances.Include(a => a.Employee);
+            }
+            else
+            {
+                // Managers see only employee attendance records + their own
+                var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+                var managerEmails = managerUsers.Select(u => u.Email!.ToLower()).ToHashSet();
+                
+                attendances = _context.Attendances
+                    .Include(a => a.Employee)
+                    .Where(a => a.Employee.Email != null &&
+                               (!managerEmails.Contains(a.Employee.Email.ToLower()) ||
+                                a.Employee.Email.ToLower() == user!.Email!.ToLower()));
+            }
         }
         else
         {
@@ -78,7 +93,19 @@ public class AttendanceController : Controller
         var oneYearAgo = DateTime.UtcNow.AddDays(-365).Date;
         var heatmapQuery = _context.Attendances.AsQueryable();
         
-        if (!isManager && currentEmployeeId.HasValue)
+        if (isManager && !User.IsInRole("Admin"))
+        {
+            // For managers (non-admin), show only employee attendance + their own in heatmap
+            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+            var managerEmails = managerUsers.Select(u => u.Email!.ToLower()).ToHashSet();
+            
+            heatmapQuery = heatmapQuery
+                .Include(a => a.Employee)
+                .Where(a => a.Employee.Email != null &&
+                           (!managerEmails.Contains(a.Employee.Email.ToLower()) ||
+                            a.Employee.Email.ToLower() == user!.Email!.ToLower()));
+        }
+        else if (!isManager && currentEmployeeId.HasValue)
         {
             // For employees, show only their own attendance in heatmap
             heatmapQuery = heatmapQuery.Where(a => a.EmployeeId == currentEmployeeId.Value);
