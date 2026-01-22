@@ -124,7 +124,7 @@ public class DepartmentsController : ControllerBase
         {
              await _context.SaveChangesAsync();
              await _notificationService.SendSystemUpdateAsync("Departments");
-             await _notificationService.SendNotificationAsync($"New department '{department.Name}' has been created via API.");
+             await _notificationService.SendToAdminsAndManagersAsync($"New department '{department.Name}' has been created via API.");
         }
         catch (DbUpdateException ex)
         {
@@ -192,7 +192,7 @@ public class DepartmentsController : ControllerBase
         {
             await _context.SaveChangesAsync();
             await _notificationService.SendSystemUpdateAsync("Departments");
-            await _notificationService.SendNotificationAsync($"Department '{department.Name}' has been updated via API.");
+            await _notificationService.SendToAdminsAndManagersAsync($"Department '{department.Name}' has been updated via API.");
         }
         catch (DbUpdateConcurrencyException)
         {

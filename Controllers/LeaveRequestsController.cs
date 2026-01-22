@@ -37,10 +37,27 @@ public class LeaveRequestsController : Controller
 
         if (isManager)
         {
-            // Managers and Admins see all leave requests
-            leaveRequests = _context.LeaveRequests
-                .Include(lr => lr.Employee)
-                .Include(lr => lr.ApprovedBy);
+            if (User.IsInRole("Admin"))
+            {
+                // Admins see all leave requests
+                leaveRequests = _context.LeaveRequests
+                    .Include(lr => lr.Employee)
+                    .Include(lr => lr.ApprovedBy);
+            }
+            else
+            {
+                // Managers see only employee leave requests + their own
+                // Get all manager emails
+                var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+                var managerEmails = managerUsers.Select(u => u.Email!.ToLower()).ToHashSet();
+                
+                leaveRequests = _context.LeaveRequests
+                    .Include(lr => lr.Employee)
+                    .Include(lr => lr.ApprovedBy)
+                    .Where(lr => lr.Employee.Email != null && 
+                                (!managerEmails.Contains(lr.Employee.Email.ToLower()) || // Employee requests
+                                 lr.Employee.Email.ToLower() == user!.Email!.ToLower())); // Or their own
+            }
             
             // Check if manager/admin has pending requests (only if they have employee record)
             if (currentEmployee != null)
@@ -142,12 +159,27 @@ public class LeaveRequestsController : Controller
         
         if (!isManager)
         {
+            // Employees can only view their own requests
             var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user!.Email);
             if (employee == null || leaveRequest.EmployeeId != employee.Id)
             {
                 return Forbid();
             }
         }
+        else if (User.IsInRole("Manager") && !User.IsInRole("Admin"))
+        {
+            // Managers cannot view other managers' leave requests
+            var requesterUser = await _userManager.FindByEmailAsync(leaveRequest.Employee.Email);
+            if (requesterUser != null && await _userManager.IsInRoleAsync(requesterUser, "Manager"))
+            {
+                // Check if it's their own request
+                if (leaveRequest.Employee.Email.ToLower() != user!.Email!.ToLower())
+                {
+                    return Forbid();
+                }
+            }
+        }
+        // Admins can view all requests (no additional check needed)
 
         // Check if user can approve/reject
         bool canApprove = false;
@@ -351,8 +383,21 @@ public class LeaveRequestsController : Controller
             _context.Add(leaveRequest);
             await _context.SaveChangesAsync();
             
-            // Notify managers/admins about new request
-            await _notificationService.SendNotificationAsync($"New Leave Request from {employee.FullName} ({leaveRequest.LeaveType})");
+            // Send targeted notifications based on requester role
+            var requesterUser = await _userManager.FindByEmailAsync(employee.Email);
+            bool isManagerRequester = requesterUser != null && await _userManager.IsInRoleAsync(requesterUser, "Manager");
+            
+            if (isManagerRequester)
+            {
+                // Manager leave request - notify admins only (privacy)
+                await _notificationService.SendToAdminsOnlyAsync($"New Leave Request from {employee.FullName} ({leaveRequest.LeaveType})");
+            }
+            else
+            {
+                // Employee leave request - notify admins and managers (backward compatibility)
+                await _notificationService.SendToAdminsAndManagersAsync($"New Leave Request from {employee.FullName} ({leaveRequest.LeaveType})");
+            }
+            
             await _notificationService.SendSystemUpdateAsync("LeaveRequests");
 
             TempData["Success"] = "Leave request submitted successfully.";
@@ -414,8 +459,13 @@ public class LeaveRequestsController : Controller
 
         await _context.SaveChangesAsync();
         
-        // Notify everyone (simplification) that a request was approved
-        await _notificationService.SendNotificationAsync($"Leave Request for {employee.FullName} has been approved.");
+        // Notify the requester personally (reuse requesterUser from line 414)
+        if (requesterUser != null)
+        {
+            await _notificationService.SendToUserAsync(requesterUser.Id, "Your leave request has been approved.");
+        }
+        
+        // Send system update for UI refresh (non-sensitive)
         await _notificationService.SendSystemUpdateAsync("LeaveRequests");
 
         TempData["Success"] = "Leave request approved successfully.";
@@ -465,8 +515,13 @@ public class LeaveRequestsController : Controller
 
         await _context.SaveChangesAsync();
         
-        // Notify everyone (simplification) that a request was rejected
-        await _notificationService.SendNotificationAsync($"Leave Request for {leaveRequest.Employee.FullName} has been rejected.");
+        // Notify the requester personally with reason (reuse requesterUser from earlier)
+        if (requesterUser != null)
+        {
+            await _notificationService.SendToUserAsync(requesterUser.Id, $"Your leave request has been rejected. Reason: {comments}");
+        }
+        
+        // Send system update for UI refresh (non-sensitive)
         await _notificationService.SendSystemUpdateAsync("LeaveRequests");
 
         TempData["Success"] = "Leave request rejected.";

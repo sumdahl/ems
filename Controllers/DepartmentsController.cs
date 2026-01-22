@@ -106,7 +106,7 @@ public class DepartmentsController : Controller
             _context.Add(department);
             await _context.SaveChangesAsync();
             await _notificationService.SendSystemUpdateAsync("Departments");
-            await _notificationService.SendNotificationAsync($"New department '{department.Name}' has been created.");
+            await _notificationService.SendToAdminsAndManagersAsync($"New department '{department.Name}' has been created.");
             TempData["Success"] = "Department created successfully with roles.";
             return RedirectToAction(nameof(Index));
         }
@@ -132,12 +132,14 @@ public class DepartmentsController : Controller
 
         if (User.IsInRole("Admin"))
         {
-            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
-            var managerEmails = managerUsers.Select(u => u.Email).ToHashSet();
-            
-            // Only show Managers who belong to THIS department
+            // Query managers directly from database to avoid Identity type mismatch
             var managers = await _context.Employees
-                .Where(e => managerEmails.Contains(e.Email) && e.DepartmentId == id)
+                .Where(e => e.DepartmentId == id && 
+                            _context.Users
+                                .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
+                                .Join(_context.Roles, x => x.ur.RoleId, r => r.Id, (x, r) => new { x.u, r })
+                                .Where(x => x.r.Name == "Manager" && x.u.Email == e.Email)
+                                .Any())
                 .OrderBy(e => e.FirstName)
                 .ToListAsync();
 
@@ -215,9 +217,9 @@ public class DepartmentsController : Controller
 
                     await _context.SaveChangesAsync();
                     await _notificationService.SendSystemUpdateAsync("Departments");
-                    await _notificationService.SendNotificationAsync($"Department '{departmentToUpdate.Name}' has been updated.");
+                    await _notificationService.SendToAdminsAndManagersAsync($"Department '{departmentToUpdate.Name}' has been updated.");
                     TempData["Success"] = "Department updated successfully.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Edit), new { id = departmentToUpdate.Id });
                 }
             }
             catch (DbUpdateConcurrencyException)
@@ -233,20 +235,36 @@ public class DepartmentsController : Controller
             }
         }
         
-        // Validation Failed - Reload data
-         if (User.IsInRole("Admin"))
-        {
-            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
-            var managerEmails = managerUsers.Select(u => u.Email).ToHashSet();
+        // Validation Failed - Reload data including roles
+        var departmentWithRoles = await _context.Departments
+            .Include(d => d.Roles)
+            .FirstOrDefaultAsync(d => d.Id == id);
             
+        if (departmentWithRoles != null)
+        {
+            // Preserve the user's input for Name and Description
+            departmentWithRoles.Name = department.Name;
+            departmentWithRoles.Description = department.Description;
+            departmentWithRoles.ManagerId = department.ManagerId;
+        }
+        
+        if (User.IsInRole("Admin"))
+        {
+            // Query managers directly from database to avoid Identity type mismatch
             var managers = await _context.Employees
-                .Where(e => managerEmails.Contains(e.Email) && e.DepartmentId == id)
+                .Where(e => e.DepartmentId == id && 
+                            _context.Users
+                                .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
+                                .Join(_context.Roles, x => x.ur.RoleId, r => r.Id, (x, r) => new { x.u, r })
+                                .Where(x => x.r.Name == "Manager" && x.u.Email == e.Email)
+                                .Any())
                 .OrderBy(e => e.FirstName)
                 .ToListAsync();
 
             ViewData["ManagerId"] = new SelectList(managers, "Id", "FullName", department.ManagerId);
         }
-        return View(department);
+        
+        return View(departmentWithRoles ?? department);
     }
 
     // GET: Departments/Delete/5
@@ -260,12 +278,18 @@ public class DepartmentsController : Controller
 
         var department = await _context.Departments
             .Include(d => d.Manager)
+            .Include(d => d.Employees)
+            .Include(d => d.Roles)
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (department == null)
         {
             return NotFound();
         }
+        
+        // Pass dependency counts to the view
+        ViewBag.EmployeeCount = department.Employees?.Count ?? 0;
+        ViewBag.RoleCount = department.Roles?.Count ?? 0;
 
         return View(department);
     }
@@ -276,12 +300,44 @@ public class DepartmentsController : Controller
     [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var department = await _context.Departments.FindAsync(id);
-        if (department != null)
+        var department = await _context.Departments
+            .Include(d => d.Employees)
+            .Include(d => d.Roles)
+            .FirstOrDefaultAsync(d => d.Id == id);
+            
+        if (department == null)
+        {
+            return NotFound();
+        }
+        
+        // Check for employees assigned to this department
+        var employeeCount = department.Employees?.Count ?? 0;
+        if (employeeCount > 0)
+        {
+            TempData["Error"] = $"Cannot delete department '{department.Name}' because it has {employeeCount} employee(s) assigned. Please reassign or remove the employees first.";
+            return RedirectToAction(nameof(Index));
+        }
+        
+        // Check for roles assigned to this department
+        var roleCount = department.Roles?.Count ?? 0;
+        if (roleCount > 0)
+        {
+            TempData["Error"] = $"Cannot delete department '{department.Name}' because it has {roleCount} role(s). Please delete the roles first from the Edit page.";
+            return RedirectToAction(nameof(Index));
+        }
+        
+        // Safe to delete
+        try
         {
             _context.Departments.Remove(department);
             await _context.SaveChangesAsync();
+            await _notificationService.SendSystemUpdateAsync("Departments");
+            await _notificationService.SendToAdminsAndManagersAsync($"Department '{department.Name}' has been deleted.");
             TempData["Destructive"] = "Department deleted successfully.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"An error occurred while deleting the department: {ex.Message}";
         }
 
         return RedirectToAction(nameof(Index));

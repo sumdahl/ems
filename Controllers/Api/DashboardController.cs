@@ -4,6 +4,7 @@ using EmployeeManagementSystem.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace EmployeeManagementSystem.Controllers.Api;
 
@@ -13,10 +14,12 @@ namespace EmployeeManagementSystem.Controllers.Api;
 public class DashboardController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public DashboardController(ApplicationDbContext context)
+    public DashboardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     [HttpGet("stats")]
@@ -25,11 +28,35 @@ public class DashboardController : ControllerBase
     {
         var today = DateTime.UtcNow.Date;
         
+        // Calculate role-aware pending leave requests count
+        int pendingLeaveCount;
+        if (User.IsInRole("Admin"))
+        {
+            // Admin sees all pending requests
+            pendingLeaveCount = await _context.LeaveRequests.CountAsync(lr => lr.Status == LeaveStatus.Pending);
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            // Manager sees only employee-submitted pending requests
+            var managerUsers = await _userManager.GetUsersInRoleAsync("Manager");
+            var managerEmails = managerUsers.Select(u => u.Email!.ToLower()).ToHashSet();
+            
+            pendingLeaveCount = await _context.LeaveRequests
+                .Include(lr => lr.Employee)
+                .CountAsync(lr => lr.Status == LeaveStatus.Pending && 
+                                  lr.Employee.Email != null && 
+                                  !managerEmails.Contains(lr.Employee.Email.ToLower()));
+        }
+        else
+        {
+            pendingLeaveCount = 0;
+        }
+        
         var stats = new DashboardStats
         {
             TotalEmployees = await _context.Employees.CountAsync(e => e.IsActive),
             TotalDepartments = await _context.Departments.CountAsync(),
-            PendingLeaveRequests = await _context.LeaveRequests.CountAsync(l => l.Status == LeaveStatus.Pending),
+            PendingLeaveRequests = pendingLeaveCount,
             TodayAttendance = await _context.Attendances.CountAsync(a => a.Date == today && a.CheckOutTime == null) // Active count
         };
 
