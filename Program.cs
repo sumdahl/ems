@@ -150,8 +150,9 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var configuration = services.GetRequiredService<IConfiguration>();
         
-        await DbInitializer.SeedAsync(context, userManager, roleManager);
+        await DbInitializer.SeedAsync(context, userManager, roleManager, configuration);
     }
     catch (Exception ex)
     {
