@@ -1,3 +1,9 @@
+## v1.0.5 (API Standardization & Robustness)
+- **API Refactoring**: Standardized all API responses with `ApiResponse<T>` and integrated structured logging.
+- **Security**: Enforced explicit Bearer authentication on all API endpoints.
+- **Seeding**: Improved `DbInitializer` with config-driven passwords, safer null checks, and consistent data seeding.
+- **Documentation**: Enhanced Swagger documentation with XML comments for all endpoints.
+
 ## v1.0.4 (Roles & Departments)
 - **Departments**: Now roles can be assigned from Departments.
 - **Employee**: While creating Employee , add country code with flag in phone number.
