@@ -1,16 +1,23 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using EmployeeManagementSystem.Models;
 
 namespace EmployeeManagementSystem.Data;
 
 public static class DbInitializer
 {
-    public static async Task SeedAsync(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public static async Task SeedAsync(
+        ApplicationDbContext context, 
+        UserManager<ApplicationUser> userManager, 
+        RoleManager<IdentityRole> roleManager,
+        IConfiguration configuration)
     {
         // Ensure database is migrated to latest version
         await context.Database.MigrateAsync();
         
+        string defaultPassword = configuration["SeedSettings:DefaultPassword"] ?? "Default@123";
+
         // Seed Identity Roles
         string[] roleNames = { "Admin", "Manager", "Employee" };
         foreach (var roleName in roleNames)
@@ -35,236 +42,192 @@ public static class DbInitializer
 
         foreach (var dept in departments)
         {
-            if (!context.Departments.Any(d => d.Name == dept.Name))
-            {
-                context.Departments.Add(dept);
-            }
+             if (!context.Departments.Any(d => d.Name == dept.Name))
+             {
+                 context.Departments.Add(dept);
+             }
         }
         await context.SaveChangesAsync();
         
-        // Seed Roles (Job Titles)
-        // Helper to get Dept ID
-        int GetDeptId(string name) => context.Departments.First(d => d.Name == name).Id;
+        // Helper to safely get Dept ID
+        int? GetDeptId(string name) => context.Departments.FirstOrDefault(d => d.Name == name)?.Id;
 
-        var roles = new List<Role>
+        // Seed Roles (Job Titles)
+        var rolesToSeed = new Dictionary<string, List<string>>
         {
-            new Role { Title = "Software Engineer", DepartmentId = GetDeptId("Engineering") },
-            new Role { Title = "Senior Software Engineer", DepartmentId = GetDeptId("Engineering") },
-            new Role { Title = "Engineering Manager", DepartmentId = GetDeptId("Engineering") },
-            new Role { Title = "HR Manager", DepartmentId = GetDeptId("Human Resources") },
-            new Role { Title = "HR Specialist", DepartmentId = GetDeptId("Human Resources") },
-            new Role { Title = "Sales Representative", DepartmentId = GetDeptId("Sales") },
-            new Role { Title = "Sales Manager", DepartmentId = GetDeptId("Sales") },
-            new Role { Title = "Accountant", DepartmentId = GetDeptId("Finance") },
-            new Role { Title = "Finance Manager", DepartmentId = GetDeptId("Finance") },
-            // New Roles for Operations
-            new Role { Title = "Operations Manager", DepartmentId = GetDeptId("Operations") },
-            new Role { Title = "Operations Analyst", DepartmentId = GetDeptId("Operations") },
-            new Role { Title = "Logistics Coordinator", DepartmentId = GetDeptId("Operations") },
-            // New Roles for Social Media Marketing
-            new Role { Title = "Social Media Manager", DepartmentId = GetDeptId("Social Media Marketing") },
-            new Role { Title = "Content Creator", DepartmentId = GetDeptId("Social Media Marketing") },
-            new Role { Title = "SEO Specialist", DepartmentId = GetDeptId("Social Media Marketing") },
-            // New Roles for Business Development
-            new Role { Title = "Business Development Manager", DepartmentId = GetDeptId("Business Development") },
-            new Role { Title = "Growth Strategist", DepartmentId = GetDeptId("Business Development") }
+            { "Engineering", new List<string> { "Software Engineer", "Senior Software Engineer", "Engineering Manager" } },
+            { "Human Resources", new List<string> { "HR Manager", "HR Specialist" } },
+            { "Sales", new List<string> { "Sales Representative", "Sales Manager" } },
+            { "Finance", new List<string> { "Accountant", "Finance Manager" } },
+            { "Operations", new List<string> { "Operations Manager", "Operations Analyst", "Logistics Coordinator" } },
+            { "Social Media Marketing", new List<string> { "Social Media Manager", "Content Creator", "SEO Specialist" } },
+            { "Business Development", new List<string> { "Business Development Manager", "Growth Strategist" } }
         };
 
-        foreach (var role in roles)
+        foreach (var deptEntry in rolesToSeed)
         {
-            if (!context.JobRoles.Any(r => r.Title == role.Title && r.DepartmentId == role.DepartmentId))
+            var deptId = GetDeptId(deptEntry.Key);
+            if (!deptId.HasValue) continue; // Skip if department missing
+
+            foreach (var roleTitle in deptEntry.Value)
             {
-                context.JobRoles.Add(role);
+                if (!context.JobRoles.Any(r => r.Title == roleTitle && r.DepartmentId == deptId.Value))
+                {
+                    context.JobRoles.Add(new Role { Title = roleTitle, DepartmentId = deptId.Value });
+                }
             }
         }
         await context.SaveChangesAsync();
         
-        // Seed Admin User
-        var adminEmail = "admin@ems.com";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        
-        if (adminUser == null)
+        // Helper to safely create user
+        async Task CreateUserAsync(string email, string fullName, string role, Gender gender)
         {
-            adminUser = new ApplicationUser
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
             {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true,
-                FullName = "System Administrator",
-                Gender = Gender.Male
-            };
-            
-            var result = await userManager.CreateAsync(adminUser, "Admin@123");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, "Admin");
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    FullName = fullName,
+                    Gender = gender
+                };
+                
+                var result = await userManager.CreateAsync(user, defaultPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, role);
+                }
             }
-        }
-        
-        // Seed Manager User
-        var managerEmail = "manager@ems.com";
-        var managerUser = await userManager.FindByEmailAsync(managerEmail);
-        
-        if (managerUser == null)
-        {
-            managerUser = new ApplicationUser
-            {
-                UserName = managerEmail,
-                Email = managerEmail,
-                EmailConfirmed = true,
-                FullName = "Department Manager",
-                Gender = Gender.Male
-            };
-            
-            var result = await userManager.CreateAsync(managerUser, "Manager@123");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(managerUser, "Manager");
-            }
-        }
-        
-        // Seed Employee User
-        var employeeEmail = "employee@ems.com";
-        var employeeUser = await userManager.FindByEmailAsync(employeeEmail);
-        
-        if (employeeUser == null)
-        {
-            employeeUser = new ApplicationUser
-            {
-                UserName = employeeEmail,
-                Email = employeeEmail,
-                EmailConfirmed = true,
-                FullName = "Regular Employee",
-                Gender = Gender.Male
-            };
-            
-            var result = await userManager.CreateAsync(employeeUser, "Employee@123");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(employeeUser, "Employee");
-            }
-        }
-        
-        // Seed Sample Employees
-        // Seed Sample Employees
-        var engDept = context.Departments.First(d => d.Name == "Engineering");
-        var humanResDept = context.Departments.First(d => d.Name == "Human Resources");
-        var salesDepartment = context.Departments.First(d => d.Name == "Sales");
-        
-        var engineerRole = context.JobRoles.First(r => r.Title == "Software Engineer");
-        var seniorEngineerRole = context.JobRoles.First(r => r.Title == "Senior Software Engineer");
-        var engineeringManagerRole = context.JobRoles.First(r => r.Title == "Engineering Manager");
-        var hrManagerRole = context.JobRoles.First(r => r.Title == "HR Manager");
-
-        // Ensure Manager Employee exists
-        if (!context.Employees.Any(e => e.Email == "manager@ems.com"))
-        {
-            var managerEmployee = new Employee
-            {
-                FirstName = "Department",
-                LastName = "Manager",
-                Email = "manager@ems.com",
-                Phone = "5551234567",
-                HireDate = DateTime.UtcNow.AddYears(-3),
-                DepartmentId = engDept.Id,
-                RoleId = engineeringManagerRole.Id,
-                Salary = 95000,
-                Address = "789 Manager Blvd",
-                IsActive = true,
-                AnnualLeaveBalance = 25,
-                SickLeaveBalance = 15,
-                Gender = Gender.Male
-            };
-            context.Employees.Add(managerEmployee);
         }
 
-        // Ensure Regular Employee exists
-        if (!context.Employees.Any(e => e.Email == "employee@ems.com"))
+        await CreateUserAsync("admin@ems.com", "System Administrator", "Admin", Gender.Male);
+        await CreateUserAsync("manager@ems.com", "Department Manager", "Manager", Gender.Male);
+        await CreateUserAsync("employee@ems.com", "Normal Employee", "Employee", Gender.Male);
+        await CreateUserAsync("sumiran.dahal@ems.com", "Sumiran Dahal", "Employee", Gender.Male);
+        await CreateUserAsync("random.dahal@ems.com", "Random Dahal", "Employee", Gender.Female);
+        
+        // Seed Sample Employees
+        // Helper to get Role ID
+        int? GetRoleId(string title) => context.JobRoles.FirstOrDefault(r => r.Title == title)?.Id;
+
+        // Sample data requirements
+        var engDeptId = GetDeptId("Engineering");
+        var hrDeptId = GetDeptId("Human Resources");
+        
+        var engManagerRoleId = GetRoleId("Engineering Manager");
+        var softwareEngRoleId = GetRoleId("Software Engineer");
+        var seniorEngRoleId = GetRoleId("Senior Software Engineer");
+        var hrManagerRoleId = GetRoleId("HR Manager");
+
+        if (engDeptId.HasValue && engManagerRoleId.HasValue)
         {
-            var regularEmployee = new Employee
+             if (!context.Employees.Any(e => e.Email == "manager@ems.com"))
+             {
+                 context.Employees.Add(new Employee
+                 {
+                     FirstName = "Department",
+                     LastName = "Manager",
+                     Email = "manager@ems.com",
+                     Phone = "9842123456",
+                     HireDate = DateTime.UtcNow.AddYears(-3),
+                     DepartmentId = engDeptId.Value,
+                     RoleId = engManagerRoleId.Value,
+                     Salary = 95000,
+                     Address = "Kathmandu, Tokha",
+                     IsActive = true,
+                     AnnualLeaveBalance = 25,
+                     SickLeaveBalance = 10,
+                     Gender = Gender.Male
+                 });
+             }
+        }
+
+        if (engDeptId.HasValue && softwareEngRoleId.HasValue)
+        {
+             if (!context.Employees.Any(e => e.Email == "employee@ems.com"))
+             {
+                 context.Employees.Add(new Employee
+                 {
+                     FirstName = "Normal",
+                     LastName = "Employee",
+                     Email = "employee@ems.com",
+                     Phone = "9842000001", // FIXED: Changed to avoid duplicate
+                     HireDate = DateTime.UtcNow.AddMonths(-6),
+                     DepartmentId = engDeptId.Value,
+                     RoleId = softwareEngRoleId.Value,
+                     Salary = 65000,
+                     Address = "Kathmandu, Tokha",
+                     IsActive = true,
+                     AnnualLeaveBalance = 20,
+                     SickLeaveBalance = 10,
+                     Gender = Gender.Male
+                 });
+             }
+        }
+
+        // Additional employees
+        if (engDeptId.HasValue && seniorEngRoleId.HasValue && !context.Employees.Any(e => e.Email == "sumiran.dahal@ems.com"))
+        {
+            context.Employees.Add(new Employee
             {
-                FirstName = "Regular",
-                LastName = "Employee",
-                Email = "employee@ems.com",
-                Phone = "5559876543",
-                HireDate = DateTime.UtcNow.AddMonths(-6),
-                DepartmentId = engDept.Id,
-                RoleId = engineerRole.Id,
-                Salary = 65000,
-                Address = "321 Employee St",
+                FirstName = "Sumiran",
+                LastName = "Dahal",
+                Email = "sumiran.dahal@ems.com",
+                Phone = "9842110123",
+                HireDate = DateTime.UtcNow.AddYears(-2),
+                DepartmentId = engDeptId.Value,
+                RoleId = seniorEngRoleId.Value,
+                Salary = 85000,
+                Address = "Kathmandu, Dhapasi",
                 IsActive = true,
-                AnnualLeaveBalance = 20,
+                AnnualLeaveBalance = 22,
                 SickLeaveBalance = 10,
                 Gender = Gender.Male
-            };
-            context.Employees.Add(regularEmployee);
+            });
         }
 
-        // Add other sample employees if none exist (legacy check)
-        if (!context.Employees.Any(e => e.Email != "manager@ems.com" && e.Email != "employee@ems.com"))
+        if (hrDeptId.HasValue && hrManagerRoleId.HasValue && !context.Employees.Any(e => e.Email == "random.dahal@ems.com"))
         {
-             var employees = new[]
+            context.Employees.Add(new Employee
             {
-                new Employee
-                {
-                    FirstName = "John",
-                    LastName = "Doe",
-                    Email = "john.doe@ems.com",
-                    Phone = "1234567890",
-                    HireDate = DateTime.UtcNow.AddYears(-2),
-                    DepartmentId = engDept.Id,
-                    RoleId = seniorEngineerRole.Id,
-                    Salary = 85000,
-                    Address = "123 Main St",
-                    IsActive = true,
-                    AnnualLeaveBalance = 22,
-                    SickLeaveBalance = 12,
-                    Gender = Gender.Male
-                },
-                new Employee
-                {
-                    FirstName = "Jane",
-                    LastName = "Smith",
-                    Email = "jane.smith@ems.com",
-                    Phone = "0987654321",
-                    HireDate = DateTime.UtcNow.AddYears(-1),
-                    DepartmentId = humanResDept.Id,
-                    RoleId = hrManagerRole.Id,
-                    Salary = 90000,
-                    Address = "456 Oak Ave",
-                    IsActive = true,
-                    AnnualLeaveBalance = 23,
-                    SickLeaveBalance = 13,
-                    Gender = Gender.Female
-                }
-            };
-            context.Employees.AddRange(employees);
+                FirstName = "Random",
+                LastName = "Dahal",
+                Email = "random.dahal@ems.com",
+                Phone = "9842110124",
+                HireDate = DateTime.UtcNow.AddYears(-1),
+                DepartmentId = hrDeptId.Value,
+                RoleId = hrManagerRoleId.Value,
+                Salary = 90000,
+                Address = "Jhapa, Damak",
+                IsActive = true,
+                AnnualLeaveBalance = 23,
+                SickLeaveBalance = 10,
+                Gender = Gender.Female
+            });
         }
-        
+
         await context.SaveChangesAsync();
         
-        // Link users to their employee records
-        var managerEmp = context.Employees.FirstOrDefault(e => e.Email == "manager@ems.com");
-        var regularEmp = context.Employees.FirstOrDefault(e => e.Email == "employee@ems.com");
-        
-        if (managerEmp != null)
+        // Link users
+        async Task LinkEmployeeAsync(string userEmail)
         {
-            managerUser = await userManager.FindByEmailAsync("manager@ems.com");
-            if (managerUser != null && managerUser.EmployeeId != managerEmp.Id)
+            var emp = context.Employees.FirstOrDefault(e => e.Email == userEmail);
+            if (emp != null)
             {
-                managerUser.EmployeeId = managerEmp.Id;
-                await userManager.UpdateAsync(managerUser);
+                var user = await userManager.FindByEmailAsync(userEmail);
+                if (user != null && user.EmployeeId != emp.Id)
+                {
+                    user.EmployeeId = emp.Id;
+                    await userManager.UpdateAsync(user);
+                }
             }
         }
-        
-        if (regularEmp != null)
-        {
-            employeeUser = await userManager.FindByEmailAsync("employee@ems.com");
-            if (employeeUser != null && employeeUser.EmployeeId != regularEmp.Id)
-            {
-                employeeUser.EmployeeId = regularEmp.Id;
-                await userManager.UpdateAsync(employeeUser);
-            }
-        }
+
+        await LinkEmployeeAsync("manager@ems.com");
+        await LinkEmployeeAsync("employee@ems.com");
+        await LinkEmployeeAsync("sumiran.dahal@ems.com");
+        await LinkEmployeeAsync("random.dahal@ems.com");
     }
 }
