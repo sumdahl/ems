@@ -10,11 +10,20 @@ namespace EmployeeManagementSystem.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "Gender",
-                table: "AspNetUsers",
-                type: "integer",
-                nullable: true);
+            // Check if column exists before adding to make migration idempotent
+            migrationBuilder.Sql(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'AspNetUsers' 
+                        AND column_name = 'Gender'
+                    ) THEN
+                        ALTER TABLE ""AspNetUsers"" ADD COLUMN ""Gender"" integer NULL;
+                    END IF;
+                END $$;
+            ");
         }
 
         /// <inheritdoc />

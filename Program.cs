@@ -166,13 +166,18 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-else
+
+// Enable Swagger in development mode
+if (app.Environment.IsDevelopment())
 {
     // Enable middleware to serve generated Swagger as a JSON endpoint.
     app.UseSwagger();
-    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-    // specifying the Swagger JSON endpoint.
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Employee Management System API v1"));
+    // Enable middleware to serve swagger-ui at /docs
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Employee Management System API v1");
+        c.RoutePrefix = "docs"; // Serve Swagger UI at /docs instead of /swagger
+    });
 }
 
 app.UseHttpsRedirection();
