@@ -23,6 +23,7 @@ public class HomeController : Controller
     }
 
     [Route("/Home/NotFound")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult PageNotFound()
     {
         return View("NotFound");
